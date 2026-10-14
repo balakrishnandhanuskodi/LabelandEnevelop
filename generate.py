@@ -215,7 +215,8 @@ def build_envelopes(guests, cfg, out, guides=False):
     A = E["print_area"]
     w, h = E["width_mm"] * mm, E["height_mm"] * mm
     aw, ah = A["width_mm"] * mm, A["height_mm"] * mm
-    x, y = A["left_mm"] * mm, h - A["top_mm"] * mm - ah
+    x = (w - A["right_mm"] * mm - aw) if "right_mm" in A else A["left_mm"] * mm
+    y = h - A["top_mm"] * mm - ah
     c = canvas.Canvas(str(out), pagesize=(w, h))
     c.setTitle(f"{cfg['event_title']} - Envelopes")
     for g in guests:
