@@ -1,0 +1,53 @@
+{
+  "event_title": "Entrainment 26",
+  "event_subtitle": "",
+
+  "columns": {
+    "name": ["Name", "Full name", "full_name"],
+    "global_seq": ["Global Sequence", "global_seq", "Sequence"],
+    "block_seq": ["Block Sequence", "block_seq", "Block"],
+    "resort": ["Resort", "property"],
+    "building": ["Building", "tower"],
+    "floor": ["Floor", "level"],
+    "room": ["Room #", "Room", "room_no"]
+  },
+
+  "qr_pattern": "{Name}",
+
+  "labels": {
+    "page_width_mm": 210,
+    "page_height_mm": 297,
+    "columns": 2,
+    "rows": 6,
+    "label_width_mm": 105,
+    "label_height_mm": 49.5,
+    "margin_top_mm": 0,
+    "margin_left_mm": 0,
+    "gap_x_mm": 0,
+    "gap_y_mm": 0,
+    "padding_mm": 4,
+    "qr_size_mm": 18,
+    "font_sizes_pt": {
+      "event": 8,
+      "global_seq": 18,
+      "block_seq": 14,
+      "name": 20,
+      "resort": 16,
+      "floor_room": 16
+    }
+  },
+
+  "envelope": {
+    "width_mm": 220,
+    "height_mm": 110,
+    "qr_size_mm": 30,
+    "font_sizes_pt": {
+      "event": 14,
+      "global_seq": 28,
+      "block_seq": 16,
+      "name": 26,
+      "resort": 18,
+      "floor_room": 18
+    }
+  }
+}

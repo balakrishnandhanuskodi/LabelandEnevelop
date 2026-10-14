@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Label Printing Portal</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        :root {
+            --navy: #1e293b;
+            --navy-light: #334155;
+            --navy-dark: #0f172a;
+            --white: #ffffff;
+            --red: #dc2626;
+            --red-light: #ef4444;
+            --red-dark: #b91c1c;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-500: #64748b;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--gray-50);
+            min-height: 100vh;
+            color: var(--gray-900);
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .header {
+            background: var(--navy);
+            color: var(--white);
+            padding: 32px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+
+        .card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--gray-200);
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            border: 1px solid transparent;
+            white-space: nowrap;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: var(--navy);
+            color: var(--white);
+            border-color: var(--navy);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--navy-light);
+            border-color: var(--navy-light);
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: var(--white);
+            border-color: #10b981;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: #059669;
+            border-color: #059669;
+        }
+
+        .file-input-container {
+            position: relative;
+        }
+
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .file-input-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border: 2px dashed var(--gray-300);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            background: var(--white);
+            color: var(--gray-700);
+            font-weight: 500;
+        }
+
+        .file-input-label:hover {
+            border-color: var(--navy);
+            background: var(--gray-50);
+            color: var(--navy);
+        }
+
+        .alert {
+            padding: 16px;
+            border-radius: 8px;
+            font-weight: 500;
+            margin-bottom: 16px;
+        }
+
+        .alert-success {
+            background: #dcfce7;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: var(--red-dark);
+        }
+
+        .alert-warning {
+            background: #fef3c7;
+            border: 1px solid #fde68a;
+            color: #92400e;
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            border: 1px solid #bfdbfe;
+            color: #1e40af;
+        }
+
+        .field-mapping {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .form-select, .form-input {
+            padding: 10px 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 14px;
+            background: var(--white);
+            transition: border-color 0.2s ease-in-out;
+        }
+
+        .form-select:focus, .form-input:focus {
+            outline: none;
+            border-color: var(--navy);
+            box-shadow: 0 0 0 3px rgba(30, 41, 59, 0.1);
+        }
+
+        .data-preview {
+            margin-top: 20px;
+        }
+
+        .table-container {
+            max-height: 400px;
+            overflow: auto;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .table th,
+        .table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .table th {
+            background: var(--gray-50);
+            font-weight: 600;
+            color: var(--gray-700);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .table tr:hover {
+            background: var(--gray-50);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid var(--gray-200);
+            border-top: 3px solid var(--navy);
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Screen view label styles */
+        .labels-container {
+            margin-top: 24px;
+            padding: 0;
+            background: white !important;
+        }
+
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto 30px;
+            background: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            position: relative;
+            padding: 13.5mm 5mm;
+            display: grid;
+            grid-template-columns: repeat(2, 100mm);
+            grid-template-rows: repeat(6, 44mm);
+            gap: 0;
+        }
+
+        .label {
+            width: 100mm;
+            height: 44mm;
+            border: 0.5px solid #ddd;
+            padding: 3mm;
+            background: white;
+            font-size: 9px;
+            line-height: 1.3;
+            box-sizing: border-box;
+            overflow: hidden;
+            font-family: Cambria, serif;
+            position: relative;
+        }
+
+        .label-table {
+            width: 100%;
+            height: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .label-table td {
+            vertical-align: middle;
+            padding: 0;
+            border: none;
+            text-align: center;
+        }
+
+        .label-left-cell {
+            width: 25%;
+            text-align: center;
+            vertical-align: middle;
+            position: relative;
+            height: 100%;
+        }
+
+        .label-right-cell {
+            width: 75%;
+            padding-left: 2mm;
+            vertical-align: middle;
+            text-align: center;
+            display: table-cell;
+        }
+
+        .label-right-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            gap: 1mm;
+        }
+
+        .label-left-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            position: relative;
+            gap: 0.5mm;
+        }
+
+        .label-global-seq {
+            font-weight: bold;
+            font-size: 18px;
+            color: #000;
+            text-align: center;
+            flex-shrink: 0;
+            margin: 0;
+            line-height: 1;
+        }
+
+        .label-qr {
+            width: 16mm;
+            height: 16mm;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            flex-shrink: 0;
+            margin: 0;
+        }
+
+        .label-qr img, .label-qr canvas {
+            max-width: 100%;
+            max-height: 100%;
+            display: block;
+        }
+
+        .label-qr-placeholder {
+            width: 14mm;
+            height: 14mm;
+            background: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            color: #999;
+            border: 1px dashed #ccc;
+        }
+
+        .label-block-seq {
+            font-weight: bold;
+            font-size: 14px;
+            color: #000;
+            text-align: center;
+            white-space: nowrap;
+            flex-shrink: 0;
+            margin: 0;
+            line-height: 1;
+        }
+
+        .label-name {
+            font-weight: bold;
+            font-size: 24px;
+            color: #000;
+            text-align: center;
+            margin-bottom: 1mm;
+        }
+
+        .label-content {
+            display: flex;
+            flex-direction: column;
+            gap: 1mm;
+            text-align: center;
+        }
+
+        .label-org {
+            font-weight: bold;
+            font-size: 17px;
+            color: #000;
+            text-align: center;
+            margin-bottom: 2px;
+        }
+
+        .label-floor {
+            font-size: 17px;
+            color: #000;
+            text-align: center;
+            margin-bottom: 1px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--navy);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .qr-options {
+            background: var(--gray-50);
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Print Styles - Critical for proper label printing */
+        @media print {
+            @page {
+                size: A4;
+                margin: 0;
+            }
+
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+
+            body {
+                margin: 0;
+                padding: 0;
+                background: white;
+            }
+
+            .container {
+                display: block;
+                margin: 0;
+                padding: 0;
+                max-width: none;
+            }
+
+            /* Hide everything except labels */
+            .header,
+            .card:not(.labels-container),
+            .loading,
+            #status {
+                display: none !important;
+            }
+
+            .labels-container {
+                margin: 0;
+                padding: 0;
+                border: none;
+                box-shadow: none;
+                background: transparent;
+            }
+
+            .page {
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+                width: 210mm;
+                height: 297mm;
+                page-break-after: always;
+                page-break-inside: avoid;
+                display: grid;
+                grid-template-columns: repeat(2, 105mm);
+                grid-template-rows: repeat(6, 49.5mm);
+                gap: 0;
+                border: none;
+            }
+
+            .page:last-child {
+                page-break-after: auto;
+            }
+
+            .label {
+                width: 105mm;
+                height: 49.5mm;
+                margin: 0;
+                padding: 4mm;
+                border: none;
+                box-sizing: border-box;
+                font-family: Cambria, serif;
+                page-break-inside: avoid;
+            }
+
+            /* Ensure QR codes print properly */
+            .label-qr img, .label-qr canvas {
+                display: block !important;
+                max-width: 100% !important;
+                max-height: 100% !important;
+            }
+
+            /* Font sizes for print */
+            .label-global-seq {
+                font-size: 18pt !important;
+            }
+
+            .label-block-seq {
+                font-size: 14pt !important;
+            }
+
+            .label-name {
+                font-size: 20pt !important;
+            }
+
+            .label-org {
+                font-size: 16pt !important;
+            }
+
+            .label-floor {
+                font-size: 16pt !important;
+            }
+        }
+
+        .print-info {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-300);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .print-info h4 {
+            margin-bottom: 8px;
+            color: var(--navy);
+        }
+
+        .print-info ul {
+            margin-left: 20px;
+            color: var(--gray-700);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏷️ Label Printing Portal</h1>
+            <p>Upload Excel data, configure fields, and print professional labels</p>
+        </div>
+
+        <div class="card">
+            <div class="controls-grid">
+                <div class="file-input-container">
+                    <input type="file" id="excelFile" class="file-input" accept=".xlsx,.xls,.csv" />
+                    <label for="excelFile" class="file-input-label">
+                        📁 Upload Excel/CSV File
+                    </label>
+                </div>
+                <button class="btn btn-primary" onclick="generateLabels()" id="generateBtn" disabled>
+                    🏷️ Generate Labels
+                </button>
+                <button class="btn btn-success" onclick="printLabels()" id="printBtn" disabled>
+                    🖨️ Print Labels
+                </button>
+            </div>
+
+            <div id="status"></div>
+
+            <div class="print-info">
+                <h4>📋 Printing Instructions:</h4>
+                <ul>
+                    <li>Label Size: 100mm × 44mm (12 labels per A4 sheet)</li>
+                    <li>When printing, ensure "Scale" is set to 100% or "Actual Size"</li>
+                    <li>Disable "Headers and Footers" in print settings</li>
+                    <li>Set margins to "None" or "Minimum"</li>
+                    <li>Use A4 paper size in portrait orientation</li>
+                </ul>
+            </div>
+
+            <div id="fieldMapping" class="hidden">
+                <h3 class="section-title">⚙️ Field Mapping Configuration</h3>
+                <p style="color: var(--gray-600); margin-bottom: 16px; font-size: 14px;">
+                    Map your Excel columns to label fields. The system will try to auto-detect common field names.
+                </p>
+                <div class="field-mapping">
+                    <div class="form-group">
+                        <label class="form-label">Name Field:</label>
+                        <select id="nameField" class="form-select">
+                            <option value="">Select field for Name</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Floor Field:</label>
+                        <select id="floorField" class="form-select">
+                            <option value="">Select field for Floor</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Room Number Field:</label>
+                        <select id="roomField" class="form-select">
+                            <option value="">Select field for Room #</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">QR Data Field:</label>
+                        <select id="qrField" class="form-select">
+                            <option value="">Select field for QR Code Data</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Global Sequence Field:</label>
+                        <select id="globalSeqField" class="form-select">
+                            <option value="">Select field for Global Sequence</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Resort Field:</label>
+                        <select id="resortField" class="form-select">
+                            <option value="">Select field for Resort</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Building Field:</label>
+                        <select id="buildingField" class="form-select">
+                            <option value="">Select field for Building</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Block Sequence Field:</label>
+                        <select id="blockSeqField" class="form-select">
+                            <option value="">Select field for Block Sequence</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="qr-options">
+                    <h4 style="margin-bottom: 12px; font-weight: 600;">QR Code Pattern</h4>
+                    <div class="form-group" style="max-width: 400px;">
+                        <label class="form-label">Use {field} placeholders to build QR content:</label>
+                        <input type="text" id="qrPattern" class="form-input" placeholder="e.g., Room-{Room #}-{Name}" value="{Name}">
+                    </div>
+                </div>
+            </div>
+
+            <div id="dataPreview" class="data-preview hidden">
+                <h3 class="section-title">👁️ Data Preview</h3>
+                <div class="table-container">
+                    <table class="table" id="previewTable"></table>
+                </div>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Generating labels and QR codes...</p>
+        </div>
+
+        <div class="card labels-container" id="labelsContainer">
+            <!-- Labels will be generated here -->
+        </div>
+    </div>
+
+    <script>
+        let excelData = [];
+        let headers = [];
+        let qrCache = {};
+
+        document.getElementById('excelFile').addEventListener('change', handleFileUpload);
+
+        function showStatus(message, type = 'success') {
+            const statusDiv = document.getElementById('status');
+            const alertClass = 
+                type === 'error' ? 'alert-error' : 
+                type === 'warning' ? 'alert-warning' : 
+                type === 'info' ? 'alert-info' : 
+                'alert-success';
+            statusDiv.innerHTML = `<div class="alert ${alertClass}">${message}</div>`;
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    
+                    if (jsonData.length > 0) {
+                        headers = jsonData[0];
+                        excelData = jsonData.slice(1).map(row => {
+                            const obj = {};
+                            headers.forEach((header, index) => {
+                                obj[header] = row[index] || '';
+                            });
+                            return obj;
+                        });
+                        
+                        setupFieldMapping();
+                        showDataPreview();
+                        showStatus(`✅ Successfully loaded ${excelData.length} records from ${file.name}`);
+                        document.getElementById('generateBtn').disabled = false;
+                    }
+                } catch (error) {
+                    showStatus(`❌ Error reading file: ${error.message}`, 'error');
+                }
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+
+        function setupFieldMapping() {
+            const selects = ['nameField', 'floorField', 'roomField', 'qrField', 'globalSeqField', 'resortField', 'buildingField', 'blockSeqField'];
+            
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                select.innerHTML = '<option value="">Select field</option>';
+                headers.forEach(header => {
+                    const option = document.createElement('option');
+                    option.value = header;
+                    option.textContent = header;
+                    select.appendChild(option);
+                });
+            });
+            
+            // Auto-select common field names
+            const fieldMappings = {
+                'nameField': ['Name Field:', 'Full name', 'name', 'full_name', 'Name'],
+                'floorField': ['Floor Field:', 'Floor', 'floor', 'level'],
+                'roomField': ['Room Number Field:', 'Room #', 'room', 'room_no', 'Room'],
+                'qrField': ['QR Image Link Field:', 'QR_Image', 'qr_data', 'QR'],
+                'globalSeqField': ['Global Sequence Field:', 'Global Sequence', 'global_seq', 'Sequence'],
+                'resortField': ['Resort Field:', 'Resort', 'resort', 'property'],
+                'buildingField': ['Building Field:', 'Building', 'building', 'tower'],
+                'blockSeqField': ['Block Sequence Field:', 'Block Sequence', 'block_seq', 'Block']
+            };
+
+            Object.keys(fieldMappings).forEach(fieldId => {
+                const select = document.getElementById(fieldId);
+                const possibleNames = fieldMappings[fieldId];
+                
+                for (let possibleName of possibleNames) {
+                    const matchingHeader = headers.find(h => {
+                        if (!h) return false;
+                        const headerLower = h.toLowerCase().trim();
+                        const possibleLower = possibleName.toLowerCase().trim();
+                        return headerLower === possibleLower || 
+                               headerLower.includes(possibleLower) ||
+                               possibleLower.includes(headerLower);
+                    });
+                    if (matchingHeader) {
+                        select.value = matchingHeader;
+                        break;
+                    }
+                }
+            });
+
+            // Update QR pattern when name field changes
+            const nameField = document.getElementById('nameField');
+            if (nameField.value) {
+                document.getElementById('qrPattern').value = `{${nameField.value}}`;
+            }
+            
+            document.getElementById('fieldMapping').classList.remove('hidden');
+        }
+
+        function showDataPreview() {
+            const previewDiv = document.getElementById('dataPreview');
+            const table = document.getElementById('previewTable');
+            
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            headers.forEach(header => {
+                const th = document.createElement('th');
+                th.textContent = header;
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            
+            const tbody = document.createElement('tbody');
+            excelData.slice(0, 5).forEach(row => {
+                const tr = document.createElement('tr');
+                headers.forEach(header => {
+                    const td = document.createElement('td');
+                    td.textContent = row[header] || '';
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+            
+            table.innerHTML = '';
+            table.appendChild(thead);
+            table.appendChild(tbody);
+            previewDiv.classList.remove('hidden');
+        }
+
+        function generateQRCode(text, size = 60) {
+            if (!text || text.trim() === '') {
+                return null;
+            }
+            
+            if (qrCache[text]) {
+                return qrCache[text];
+            }
+            
+            try {
+                const tempDiv = document.createElement('div');
+                tempDiv.style.display = 'none';
+                document.body.appendChild(tempDiv);
+                
+                const qr = new QRCode(tempDiv, {
+                    text: text,
+                    width: size,
+                    height: size,
+                    colorDark: '#000000',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+                
+                const canvas = tempDiv.querySelector('canvas');
+                if (canvas) {
+                    const dataUrl = canvas.toDataURL('image/png');
+                    qrCache[text] = dataUrl;
+                    document.body.removeChild(tempDiv);
+                    return dataUrl;
+                }
+                
+                document.body.removeChild(tempDiv);
+                return null;
+            } catch (error) {
+                console.error('QR generation error:', error);
+                return null;
+            }
+        }
+
+        function processQRPattern(pattern, record) {
+            let result = pattern;
+            headers.forEach(header => {
+                const placeholder = `{${header}}`;
+                if (result.includes(placeholder)) {
+                    result = result.replace(new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), record[header] || '');
+                }
+            });
+            return result;
+        }
+
+        function generateLabels() {
+            const nameField = document.getElementById('nameField').value;
+            const floorField = document.getElementById('floorField').value;
+            const roomField = document.getElementById('roomField').value;
+            const qrField = document.getElementById('qrField').value;
+            const globalSeqField = document.getElementById('globalSeqField').value;
+            const resortField = document.getElementById('resortField').value;
+            const buildingField = document.getElementById('buildingField').value;
+            const blockSeqField = document.getElementById('blockSeqField').value;
+            const qrPattern = document.getElementById('qrPattern').value;
+
+            if (!nameField) {
+                showStatus('❌ Please select at least the Name field', 'error');
+                return;
+            }
+
+            document.getElementById('loading').classList.add('show');
+            qrCache = {};
+            
+            setTimeout(() => {
+                const labelsContainer = document.getElementById('labelsContainer');
+                labelsContainer.innerHTML = '';
+
+                const labelsPerPage = 12;
+                const totalPages = Math.ceil(excelData.length / labelsPerPage);
+
+                for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
+                    const page = document.createElement('div');
+                    page.className = 'page';
+
+                    const startIndex = pageIndex * labelsPerPage;
+                    const endIndex = Math.min(startIndex + labelsPerPage, excelData.length);
+
+                    for (let i = startIndex; i < endIndex; i++) {
+                        const record = excelData[i];
+                        const label = document.createElement('div');
+                        label.className = 'label';
+
+                        // Create label structure
+                        const table = document.createElement('table');
+                        table.className = 'label-table';
+                        
+                        const tr = document.createElement('tr');
+                        
+                        // Left cell
+                        const leftTd = document.createElement('td');
+                        leftTd.className = 'label-left-cell';
+                        
+                        const leftContent = document.createElement('div');
+                        leftContent.className = 'label-left-content';
+                        
+                        // Global Sequence
+                        const globalSeqDiv = document.createElement('div');
+                        globalSeqDiv.className = 'label-global-seq';
+                        if (globalSeqField && record[globalSeqField]) {
+                            globalSeqDiv.textContent = record[globalSeqField];
+                        }
+                        
+                        // QR Code
+                        const qrDiv = document.createElement('div');
+                        qrDiv.className = 'label-qr';
+                        
+                        // Generate QR code from pattern
+                        let qrText = '';
+                        if (qrPattern) {
+                            qrText = processQRPattern(qrPattern, record);
+                        } else if (nameField && record[nameField]) {
+                            qrText = record[nameField];
+                        }
+                        
+                        const qrDataUrl = generateQRCode(qrText, 60);
+                        if (qrDataUrl) {
+                            const qrImg = document.createElement('img');
+                            qrImg.src = qrDataUrl;
+                            qrImg.alt = 'QR Code';
+                            qrDiv.appendChild(qrImg);
+                        } else {
+                            const placeholder = document.createElement('div');
+                            placeholder.className = 'label-qr-placeholder';
+                            placeholder.textContent = 'QR';
+                            qrDiv.appendChild(placeholder);
+                        }
+                        
+                        // Block Sequence
+                        const blockSeqDiv = document.createElement('div');
+                        blockSeqDiv.className = 'label-block-seq';
+                        if (blockSeqField && record[blockSeqField]) {
+                            blockSeqDiv.textContent = record[blockSeqField];
+                        }
+                        
+                        leftContent.appendChild(globalSeqDiv);
+                        leftContent.appendChild(qrDiv);
+                        leftContent.appendChild(blockSeqDiv);
+                        leftTd.appendChild(leftContent);
+                        
+                        // Right cell
+                        const rightTd = document.createElement('td');
+                        rightTd.className = 'label-right-cell';
+                        
+                        const rightContent = document.createElement('div');
+                        rightContent.className = 'label-right-content';
+                        
+                        // Name
+                        const nameDiv = document.createElement('div');
+                        nameDiv.className = 'label-name';
+                        if (nameField && record[nameField]) {
+                            nameDiv.textContent = record[nameField];
+                        }
+                        
+                        // Content
+                        const content = document.createElement('div');
+                        content.className = 'label-content';
+                        
+                        // Resort - Building
+                        if (resortField && record[resortField]) {
+                            const resortDiv = document.createElement('div');
+                            resortDiv.className = 'label-org';
+                            let resortText = record[resortField];
+                            if (buildingField && record[buildingField]) {
+                                resortText += ` - ${record[buildingField]}`;
+                            }
+                            resortDiv.textContent = resortText;
+                            content.appendChild(resortDiv);
+                        }
+                        
+                        // Floor and Room
+                        if ((floorField && record[floorField]) || (roomField && record[roomField])) {
+                            const floorRoomDiv = document.createElement('div');
+                            floorRoomDiv.className = 'label-floor';
+                            
+                            let floorRoomText = '';
+                            if (floorField && record[floorField]) {
+                                floorRoomText += `Floor: ${record[floorField]}`;
+                            }
+                            if (roomField && record[roomField]) {
+                                if (floorRoomText) floorRoomText += ' - ';
+                                floorRoomText += `Room # ${record[roomField]}`;
+                            }
+                            
+                            floorRoomDiv.textContent = floorRoomText;
+                            content.appendChild(floorRoomDiv);
+                        }
+                        
+                        rightContent.appendChild(nameDiv);
+                        rightContent.appendChild(content);
+                        rightTd.appendChild(rightContent);
+                        
+                        tr.appendChild(leftTd);
+                        tr.appendChild(rightTd);
+                        table.appendChild(tr);
+                        label.appendChild(table);
+                        
+                        page.appendChild(label);
+                    }
+
+                    // Fill empty labels
+                    for (let i = endIndex; i < startIndex + labelsPerPage; i++) {
+                        const emptyLabel = document.createElement('div');
+                        emptyLabel.className = 'label';
+                        page.appendChild(emptyLabel);
+                    }
+
+                    labelsContainer.appendChild(page);
+                }
+
+                document.getElementById('loading').classList.remove('show');
+                document.getElementById('printBtn').disabled = false;
+                
+                showStatus(`✅ Generated ${excelData.length} labels on ${totalPages} page(s). Ready to print!`, 'success');
+            }, 100);
+        }
+
+        function printLabels() {
+            // Show print instructions
+            showStatus('📋 Opening print dialog. Remember: Set scale to 100%, disable headers/footers, use minimum margins.', 'info');
+            
+            // Open print dialog after a small delay
+            setTimeout(() => {
+                window.print();
+            }, 500);
+        }
+    </script>
+</body>
+</html>
