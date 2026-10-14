@@ -92,7 +92,7 @@ def guest(rec, cols, qr_pattern):
     g["resort_line"] = " - ".join(x for x in (g["resort"], g["building"]) if x)
     parts = []
     if g["floor"]:
-        parts.append(f"Floor: {g['floor']}")
+        parts.append(g['floor'])
     if g["room"]:
         parts.append(f"Room # {g['room']}")
     g["floor_room"] = " - ".join(parts)

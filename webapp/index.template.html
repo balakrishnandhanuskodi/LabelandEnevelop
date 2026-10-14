@@ -260,7 +260,7 @@ function guests(){
   return records.map(rec => {
     const g = {}; Object.entries(cols).forEach(([k,c]) => g[k] = c ? (rec[c] || "") : "");
     g.resort_line = [g.resort, g.building].filter(Boolean).join(" - ");
-    const p = []; if (g.floor) p.push(`Floor: ${g.floor}`); if (g.room) p.push(`Room # ${g.room}`);
+    const p = []; if (g.floor) p.push(g.floor); if (g.room) p.push(`Room # ${g.room}`);
     g.floor_room = p.join(" - ");
     g.qr = pattern.replace(/\{([^}]+)\}/g, (_, k) => rec[k] || "").trim() || g.name;
     return g;
