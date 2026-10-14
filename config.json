@@ -71,6 +71,8 @@
   "envelope_types": {
     "leonia": {
       "_note": "Leonia envelope: 4.5 cm green band across the top is left blank; content starts 1.5 mm below it, 2 mm from the right edge. Anything not listed here is the same as 'envelope' (standard).",
+      "width_mm": 220,
+      "height_mm": 110,
       "print_area": { "top_mm": 46.5, "right_mm": 2 }
     }
   }
