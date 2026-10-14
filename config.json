@@ -1,5 +1,6 @@
 {
   "event_title": "Entrainment 26",
+  "print_event_title": false,
   "event_subtitle": "",
 
   "columns": {
@@ -26,6 +27,7 @@
     "gap_x_mm": 0,
     "gap_y_mm": 0,
     "padding_mm": 4,
+    "stack_gap_mm": 2,
     "qr_size_mm": 18,
     "font_sizes_pt": {
       "event": 8,
@@ -48,6 +50,7 @@
       "height_mm": 34
     },
     "padding_mm": 1,
+    "stack_gap_mm": 2,
     "qr_size_mm": 16,
     "font_sizes_pt": {
       "event": 7,

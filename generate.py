@@ -133,17 +133,23 @@ def wrap_two_lines(text, font, size, max_w, min_size):
     return lines, s
 
 
-def draw_stack(c, items, cx, top, bottom):
-    """items: list of (kind, payload, height_pt, font, size). Centered vertically between top/bottom."""
-    total = sum(i[2] for i in items)
-    y = bottom + (top - bottom + total) / 2
-    for kind, payload, h, font, size in items:
+def draw_stack(c, items, cx, top, bottom, gap=0, start=None):
+    """items: list of (kind, payload, height_pt, font, size).
+    Centered vertically between top/bottom (or starting at y=start), with `gap` between items.
+    Returns the y of the stack's top edge."""
+    total = sum(i[2] for i in items) + gap * max(len(items) - 1, 0)
+    y = start if start is not None else bottom + (top - bottom + total) / 2
+    top_edge = y
+    for n, (kind, payload, h, font, size) in enumerate(items):
+        if n:
+            y -= gap
         if kind == "text":
             c.setFont(font, size)
             c.drawCentredString(cx, y - h + (h - size * 0.7) / 2, payload)
         elif kind == "qr":
             c.drawImage(qr_image(payload), cx - h / 2, y - h, h, h)
         y -= h
+    return top_edge
 
 
 def text_item(text, font, size, max_w, gap=1.15):
@@ -152,6 +158,10 @@ def text_item(text, font, size, max_w, gap=1.15):
 
 
 # ---------------------------------------------------------------- labels
+def printed_title(cfg):
+    return cfg["event_title"] if cfg.get("print_event_title") else ""
+
+
 def draw_label(c, g, x, y, w, h, L, title, guides):
     fs = L["font_sizes_pt"]
     pad = L["padding_mm"] * mm
@@ -163,8 +173,9 @@ def draw_label(c, g, x, y, w, h, L, title, guides):
     left_w = iw * 0.25
     right_x, right_w = ix + left_w + 2 * mm, iw - left_w - 2 * mm
 
-    # left: global seq / QR / block seq
-    qr = min(L["qr_size_mm"] * mm, left_w, ih - (fs["global_seq"] + fs["block_seq"]) * 1.2)
+    # left: global seq / QR / block seq, with a gap between each
+    gap = L.get("stack_gap_mm", 2) * mm
+    qr = min(L["qr_size_mm"] * mm, left_w, ih - (fs["global_seq"] + fs["block_seq"]) * 1.15 - 2 * gap)
     left = []
     if g["global_seq"]:
         left.append(text_item(g["global_seq"], FONT_BOLD, fs["global_seq"], left_w))
@@ -172,9 +183,10 @@ def draw_label(c, g, x, y, w, h, L, title, guides):
         left.append(("qr", g["qr"], qr, None, None))
     if g["block_seq"]:
         left.append(text_item(g["block_seq"], FONT_BOLD, fs["block_seq"], left_w))
-    draw_stack(c, left, ix + left_w / 2, iy + ih, iy)
+    left_top = draw_stack(c, left, ix + left_w / 2, iy + ih, iy, gap)
 
-    # right: event title / name / resort - building / floor - room
+    # right: (optional event title) / name / resort - building / floor - room,
+    # starting level with the top of the left column
     right = []
     if title:
         right.append(text_item(title.upper(), FONT, fs["event"], right_w, 1.5))
@@ -185,7 +197,7 @@ def draw_label(c, g, x, y, w, h, L, title, guides):
         right.append(text_item(g["resort_line"], FONT_BOLD, fs["resort"], right_w))
     if g["floor_room"]:
         right.append(text_item(g["floor_room"], FONT, fs["floor_room"], right_w))
-    draw_stack(c, right, right_x + right_w / 2, iy + ih, iy)
+    draw_stack(c, right, right_x + right_w / 2, iy + ih, iy, start=left_top if left else None)
 
 
 def build_labels(guests, cfg, out, guides):
@@ -203,7 +215,7 @@ def build_labels(guests, cfg, out, guides):
         r, col = divmod(slot, cols)
         x = L["margin_left_mm"] * mm + col * (lw + L["gap_x_mm"] * mm)
         y = ph - L["margin_top_mm"] * mm - (r + 1) * lh - r * L["gap_y_mm"] * mm
-        draw_label(c, g, x, y, lw, lh, L, cfg["event_title"], guides)
+        draw_label(c, g, x, y, lw, lh, L, printed_title(cfg), guides)
     c.save()
     return -(-len(guests) // per_page)
 
@@ -220,7 +232,7 @@ def build_envelopes(guests, cfg, out, guides=False):
     c = canvas.Canvas(str(out), pagesize=(w, h))
     c.setTitle(f"{cfg['event_title']} - Envelopes")
     for g in guests:
-        draw_label(c, g, x, y, aw, ah, E, cfg["event_title"], guides)
+        draw_label(c, g, x, y, aw, ah, E, printed_title(cfg), guides)
         c.showPage()
     c.save()
 

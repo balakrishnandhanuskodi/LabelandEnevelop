@@ -96,8 +96,9 @@
         <label class="f" for="qrPattern">QR code content</label>
         <input type="text" id="qrPattern">
         <div class="hint">Use {Column Name} placeholders, e.g. E26-{Global Sequence}-{Name}</div>
-        <label class="f" for="eventTitle">Event title (printed on each)</label>
+        <label class="f" for="eventTitle">Event title</label>
         <input type="text" id="eventTitle">
+        <label class="chk" style="margin-top:6px"><input type="checkbox" id="showTitle"> Print the event title on labels &amp; envelopes</label>
       </div>
 
       <div class="card hidden" id="outCard">
@@ -173,11 +174,11 @@ const DEFAULTS = {
   },
   labels: { page_width_mm:210, page_height_mm:297, columns:2, rows:6,
     label_width_mm:105, label_height_mm:49.5, margin_top_mm:0, margin_left_mm:0, gap_x_mm:0, gap_y_mm:0,
-    padding_mm:4, qr_size_mm:18,
+    padding_mm:4, stack_gap_mm:2, qr_size_mm:18,
     font_sizes_pt:{event:8, global_seq:18, block_seq:14, name:20, resort:16, floor_room:16} },
   envelope: { width_mm:220, height_mm:110,
     print_area:{right_mm:1, top_mm:5, width_mm:92, height_mm:34},
-    padding_mm:1, qr_size_mm:16,
+    padding_mm:1, stack_gap_mm:2, qr_size_mm:16,
     font_sizes_pt:{event:7, global_seq:16, block_seq:12, name:18, resort:14, floor_room:14} }
 };
 const FIELD_LABELS = {name:"Name (required)", global_seq:"Global sequence", block_seq:"Block sequence",
@@ -188,7 +189,7 @@ const FONT_REG_B64 = "__CALADEA_REG__";
 const FONT_BOLD_B64 = "__CALADEA_BOLD__";
 
 /* ---------- state ---------- */
-const STORE = "e26-print-settings";
+const STORE = "e26-print-settings-v2";
 let cfg = loadCfg(), headers = [], records = [], fileStem = "guests", view = "labels", previewTimer = null;
 
 function clone(o){ return JSON.parse(JSON.stringify(o)); }
@@ -307,34 +308,39 @@ function drawQR(doc, text, x, y, size){
     }
   }
 }
-function drawStack(doc, items, cx, top, bottom){
-  const total = items.reduce((s,i)=>s+i.h, 0);
-  let y = top + ((bottom - top) - total) / 2;
-  items.forEach(it => {
+function drawStack(doc, items, cx, top, bottom, gap=0, start=null){
+  const total = items.reduce((s,i)=>s+i.h, 0) + gap * Math.max(items.length - 1, 0);
+  let y = start !== null ? start : top + ((bottom - top) - total) / 2;
+  const topEdge = y;
+  items.forEach((it, n) => {
+    if (n) y += gap;
     if (it.kind === "text"){
       doc.setFont(it.font, "normal"); doc.setFontSize(it.size);
       doc.text(it.text, cx, y + it.h - (it.h - it.size*0.7*PT)/2, {align:"center"});
     } else drawQR(doc, it.text, cx - it.h/2, y, it.h);
     y += it.h;
   });
+  return topEdge;
 }
+function printedTitle(){ return $("showTitle").checked ? cfg.event_title : ""; }
 function drawLabel(doc, g, x, y, w, h, L, title, guides){
   const fs = L.font_sizes_pt, pad = L.padding_mm;
   if (guides){ doc.setDrawColor(190); doc.setLineWidth(0.1); doc.rect(x, y, w, h, "S"); }
   const ix = x + pad, iy = y + pad, iw = w - 2*pad, ih = h - 2*pad;
   const leftW = iw * 0.25, rightX = ix + leftW + 2, rightW = iw - leftW - 2;
-  const qr = Math.min(L.qr_size_mm, leftW, ih - (fs.global_seq + fs.block_seq) * 1.2 * PT);
+  const gap = L.stack_gap_mm ?? 2;
+  const qr = Math.min(L.qr_size_mm, leftW, ih - (fs.global_seq + fs.block_seq) * 1.15 * PT - 2 * gap);
   const left = [];
   if (g.global_seq) left.push(textItem(doc, g.global_seq, FB, fs.global_seq, leftW));
   if (g.qr) left.push({kind:"qr", text:g.qr, h:qr});
   if (g.block_seq) left.push(textItem(doc, g.block_seq, FB, fs.block_seq, leftW));
-  drawStack(doc, left, ix + leftW/2, iy, iy + ih);
+  const leftTop = drawStack(doc, left, ix + leftW/2, iy, iy + ih, gap);
   const right = [];
   if (title) right.push(textItem(doc, title.toUpperCase(), F, fs.event, rightW, 1.5));
   if (g.name){ const [lines, s] = wrapTwo(doc, g.name, FB, fs.name, rightW, 11); lines.forEach(l => right.push({kind:"text", text:l, font:FB, size:s, h:s*1.15*PT})); }
   if (g.resort_line) right.push(textItem(doc, g.resort_line, FB, fs.resort, rightW));
   if (g.floor_room) right.push(textItem(doc, g.floor_room, F, fs.floor_room, rightW));
-  drawStack(doc, right, rightX + rightW/2, iy, iy + ih);
+  drawStack(doc, right, rightX + rightW/2, iy, iy + ih, 0, left.length ? leftTop : null);
 }
 function buildLabels(list, guides){
   const L = cfg.labels, per = L.columns * L.rows;
@@ -345,7 +351,7 @@ function buildLabels(list, guides){
     const r = Math.floor(slot / L.columns), c = slot % L.columns;
     const x = L.margin_left_mm + c * (L.label_width_mm + L.gap_x_mm);
     const y = L.margin_top_mm + r * (L.label_height_mm + L.gap_y_mm);
-    drawLabel(doc, g, x, y, L.label_width_mm, L.label_height_mm, L, cfg.event_title, guides);
+    drawLabel(doc, g, x, y, L.label_width_mm, L.label_height_mm, L, printedTitle(), guides);
   });
   return doc;
 }
@@ -356,7 +362,7 @@ function buildEnvelopes(list, guides){
   const x = E.width_mm - A.right_mm - A.width_mm, y = A.top_mm;
   list.forEach((g, i) => {
     if (i) doc.addPage([E.width_mm, E.height_mm], orient);
-    drawLabel(doc, g, x, y, A.width_mm, A.height_mm, E, cfg.event_title, guides);
+    drawLabel(doc, g, x, y, A.width_mm, A.height_mm, E, printedTitle(), guides);
   });
   return doc;
 }
@@ -428,6 +434,7 @@ drop.addEventListener("drop", e => { const f = e.dataTransfer.files[0]; if (f) r
 $("btnLabels").onclick = () => download("labels");
 $("btnEnv").onclick = () => download("env");
 $("guides").onchange = schedulePreview;
+$("showTitle").onchange = schedulePreview;
 $("qrPattern").oninput = schedulePreview;
 $("eventTitle").value = cfg.event_title;
 $("eventTitle").oninput = () => { cfg.event_title = $("eventTitle").value; saveCfg(); schedulePreview(); };
