@@ -9,7 +9,18 @@ Turns a guest list (Excel or CSV) into two print-ready PDFs:
 
 Each label and envelope carries the same layout as the original portal: global sequence, QR code and block sequence on the left; name, `Resort - Building` and `Floor: X - Room # Y` on the right; plus the event title.
 
-## Run it
+## Web app (no install)
+
+Open `web/index.html` in a browser (double-click works), or host it:
+
+- **Netlify:** connect this repo — `netlify.toml` publishes the `web/` folder, no build step. Or drag the `web` folder onto Netlify Drop.
+- Upload the Excel/CSV → check the column mapping → **Labels PDF** / **Envelopes PDF**.
+- Sizes and positions are under *Sizes & positions*; they're remembered in that browser.
+- The guest list never leaves the browser — PDFs are built on the device.
+
+To change the web app, edit `webapp/index.template.html`, then run `python webapp/build.py` (it embeds the fonts into `web/index.html`).
+
+## Command line (Python)
 
 ```bash
 pip install reportlab qrcode openpyxl
@@ -40,4 +51,7 @@ Everything is in `config.json`:
 - `config.json` — sizes, fonts, columns, QR pattern
 - `fonts/` — Caladea (metric-compatible with Cambria, Apache 2.0)
 - `sample/` — made-up sample data and its output PDFs
+- `web/index.html` — the web app (built file, deploy this)
+- `webapp/` — web app source template + build script
+- `netlify.toml` — Netlify settings
 - `legacy/label-printing-portal-fixed.html` — the original browser-based portal
