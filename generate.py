@@ -17,9 +17,12 @@ Print at "Actual size" / 100% scale, no "fit to page".
 """
 import argparse
 import csv
+import hashlib
 import json
 import re
 import sys
+import urllib.parse
+import urllib.request
 from pathlib import Path
 
 import qrcode
@@ -94,7 +97,7 @@ def fill_pattern(pattern, rec):
     return re.sub(r"\{([^}]+)\}", lambda m: str(rec.get(m.group(1), "")), pattern).strip()
 
 
-def guest(rec, cols, qr_pattern):
+def guest(rec, cols, qr_pattern, qr_mode="text"):
     g = {k: (rec.get(c, "") if c else "") for k, c in cols.items()}
     # QR = the QR column's value exactly as in the sheet (hyperlink address if the cell is a link).
     # Nothing is added; an empty cell gives no QR. The pattern is only used when there is no QR column.
@@ -102,6 +105,7 @@ def guest(rec, cols, qr_pattern):
         g["qr"] = rec["__links"].get(cols["qr"]) or rec.get(cols["qr"], "")
     else:
         g["qr"] = fill_pattern(qr_pattern, rec) if qr_pattern else ""
+    g["qr_mode"] = qr_mode if cols.get("qr") else "text"
     g["resort_line"] = " - ".join(x for x in (g["resort"], g["building"]) if x)
     parts = []
     if g["floor"]:
@@ -110,6 +114,45 @@ def guest(rec, cols, qr_pattern):
         parts.append(f"Room # {g['room']}")
     g["floor_room"] = " - ".join(parts)
     return g
+
+
+# ---------------------------------------------------------------- original QR images
+IMG_RE = re.compile(r"\.(jpe?g|png|gif|webp)(?:[?#]|$)", re.I)
+QR_IMAGES = {}      # url -> local file path (embedded exactly as is)
+
+
+def is_image_link(v):
+    return bool(re.match(r"https?://", v, re.I) and IMG_RE.search(v))
+
+
+def url_file_name(url):
+    return urllib.parse.unquote(urllib.parse.urlparse(url).path.rsplit("/", 1)[-1]).lower()
+
+
+def load_qr_images(urls, cache_dir: Path, local_dir: Path | None):
+    """Find each QR image: a matching file in --qr-images, else download (cached)."""
+    local = {}
+    if local_dir:
+        local = {p.name.lower(): p for p in local_dir.iterdir() if p.is_file()}
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    missing = []
+    for url in urls:
+        name = url_file_name(url)
+        if name in local:
+            QR_IMAGES[url] = local[name]
+            continue
+        ext = Path(name).suffix or ".img"
+        dest = cache_dir / (hashlib.sha1(url.encode()).hexdigest()[:16] + ext)
+        if not dest.exists():
+            try:
+                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(req, timeout=30) as r:
+                    dest.write_bytes(r.read())
+            except Exception as e:
+                missing.append((url, str(e)))
+                continue
+        QR_IMAGES[url] = dest
+    return missing
 
 
 # ---------------------------------------------------------------- drawing helpers
@@ -145,6 +188,23 @@ def wrap_two_lines(text, font, size, max_w, min_size):
     return lines, s
 
 
+def draw_qr_image(c, url, x, y, size):
+    """Place the original QR image unchanged (fitted inside the square if not square)."""
+    path = QR_IMAGES.get(url)
+    if not path:
+        c.saveState()
+        c.setStrokeColorRGB(0.6, 0.6, 0.6); c.setDash(2, 2); c.setLineWidth(0.5)
+        c.rect(x, y, size, size)
+        c.setFont(FONT, 5); c.setFillColorRGB(0.4, 0.4, 0.4)
+        c.drawCentredString(x + size / 2, y + size / 2, "QR image missing")
+        c.restoreState()
+        return
+    img = ImageReader(str(path))
+    w, h = img.getSize()
+    k = min(size / w, size / h)
+    c.drawImage(str(path), x + (size - w * k) / 2, y + (size - h * k) / 2, w * k, h * k)
+
+
 def draw_stack(c, items, cx, top, bottom, gap=0, start=None):
     """items: list of (kind, payload, height_pt, font, size).
     Centered vertically between top/bottom (or starting at y=start), with `gap` between items.
@@ -160,6 +220,8 @@ def draw_stack(c, items, cx, top, bottom, gap=0, start=None):
             c.drawCentredString(cx, y - h + (h - size * 0.7) / 2, payload)
         elif kind == "qr":
             c.drawImage(qr_image(payload), cx - h / 2, y - h, h, h)
+        elif kind == "qrimg":
+            draw_qr_image(c, payload, cx - h / 2, y - h, h)
         y -= h
     return top_edge
 
@@ -192,7 +254,7 @@ def draw_label(c, g, x, y, w, h, L, title, guides):
     if g["global_seq"]:
         left.append(text_item(g["global_seq"], FONT_BOLD, fs["global_seq"], left_w))
     if g["qr"]:
-        left.append(("qr", g["qr"], qr, None, None))
+        left.append(("qrimg" if g.get("qr_mode") == "image" else "qr", g["qr"], qr, None, None))
     if g["block_seq"]:
         left.append(text_item(g["block_seq"], FONT_BOLD, fs["block_seq"], left_w))
     # right: (optional event title) / name / resort - building / floor - room
@@ -211,7 +273,7 @@ def draw_label(c, g, x, y, w, h, L, title, guides):
         # Pack the whole block into the box's top-right corner: the widest text line
         # ends at the right edge and the first line's capitals touch the top edge.
         def width(it):
-            return it[2] if it[0] == "qr" else pdfmetrics.stringWidth(it[1], it[3], it[4])
+            return pdfmetrics.stringWidth(it[1], it[3], it[4]) if it[0] == "text" else it[2]
         def cap_offset(items):
             return (items[0][2] - items[0][4] * 0.7) / 2 if items and items[0][0] == "text" else 0
         rw = max((width(i) for i in right), default=0)
@@ -272,6 +334,7 @@ def main():
     ap.add_argument("data", type=Path, help="Excel (.xlsx) or CSV guest list")
     ap.add_argument("--config", type=Path, default=HERE / "config.json")
     ap.add_argument("--out", type=Path, default=Path("output"))
+    ap.add_argument("--qr-images", type=Path, help="folder of QR image files to use instead of downloading (matched by file name)")
     ap.add_argument("--guides", action="store_true", help="draw label / envelope print-area outlines for an alignment test print")
     a = ap.parse_args()
 
@@ -284,8 +347,21 @@ def main():
     for f, h in cols.items():
         print(f"  {f:<11} <- {h or '(not found)'}")
 
-    guests = [guest(r, cols, cfg["qr_pattern"]) for r in records]
+    qr_mode = "text"
+    if cols.get("qr"):
+        vals = [(r["__links"].get(cols["qr"]) or r.get(cols["qr"], "")) for r in records]
+        vals = [v for v in vals if v]
+        want = cfg.get("qr_mode", "auto")
+        if want == "image" or (want == "auto" and vals and sum(map(is_image_link, vals)) >= len(vals) / 2):
+            qr_mode = "image"
+    guests = [guest(r, cols, cfg["qr_pattern"], qr_mode) for r in records]
     guests = [g for g in guests if g["name"]]
+    if qr_mode == "image":
+        urls = sorted({g["qr"] for g in guests if g["qr"]})
+        missing = load_qr_images(urls, HERE / ".qr_cache", a.qr_images)
+        print(f"  QR images: {len(urls) - len(missing)} of {len(urls)} found (embedded exactly as is)")
+        for url, err in missing[:10]:
+            print(f"    missing: {url}  ({err})")
     a.out.mkdir(parents=True, exist_ok=True)
     stem = a.data.stem
     lab, env = a.out / f"{stem}_labels.pdf", a.out / f"{stem}_envelopes.pdf"

@@ -93,6 +93,19 @@
       <div class="card hidden" id="mapCard">
         <h2><span class="step">2</span>Columns</h2>
         <div id="mapFields"></div>
+        <div id="qrModeBox" class="hidden">
+          <label class="f" for="qrMode">QR code on the label</label>
+          <select id="qrMode">
+            <option value="image">Use the QR image from the link (exactly as is)</option>
+            <option value="text">Make a new QR that contains the link text</option>
+          </select>
+          <div id="qrImgStatus" class="hint"></div>
+          <div id="qrFilesBox" class="hidden" style="margin-top:8px">
+            <button class="ghost" id="btnQrFiles" type="button" style="width:100%">Add QR image files…</button>
+            <input type="file" id="qrFiles" accept="image/*" multiple>
+            <div class="hint">Pick the downloaded QR images (e.g. 15335_20261012172437.jpeg). They're matched to rows by file name.</div>
+          </div>
+        </div>
         <div id="qrPatternBox">
         <label class="f" for="qrPattern">QR content pattern (only when no QR column is chosen)</label>
         <input type="text" id="qrPattern" placeholder="e.g. {Name} or E26-{Global Sequence}">
@@ -276,7 +289,94 @@ function showData(){
   t.innerHTML = "<thead><tr>" + hs.map(h=>`<th>${h}</th>`).join("") + "</tr></thead><tbody>" +
     records.map(r => "<tr>" + hs.map(h=>`<td>${(r[h]||"").replace(/</g,"&lt;")}</td>`).join("") + "</tr>").join("") + "</tbody>";
 }
-function syncQrUi(){ $("qrPatternBox").classList.toggle("hidden", !!$("map_qr").value); schedulePreview(); }
+/* ---------- original QR images (embedded exactly as is) ---------- */
+const IMG_RE = /\.(jpe?g|png|gif|webp)(?:[?#]|$)/i;
+// Same-site proxy paths (set up in netlify.toml) so the browser isn't blocked from reading the images.
+const PROXY = {"d31tyzfgyo425y.cloudfront.net": "/qrimg"};
+const qrImages = new Map();   // url -> entry | null (failed)
+const localQr = new Map();    // file name (lower case) -> entry
+let qrLoadSeq = 0;
+function fileName(u){
+  try { return decodeURIComponent(new URL(u).pathname.split("/").pop()).toLowerCase(); }
+  catch(e){ return (String(u).split(/[\/?#]/).filter(Boolean).pop() || "").toLowerCase(); }
+}
+function readAsDataURL(blob){ return new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = no; r.readAsDataURL(blob); }); }
+function imgSize(src){ return new Promise((ok, no) => { const i = new Image(); i.onload = () => ok([i.naturalWidth, i.naturalHeight]); i.onerror = () => no(new Error("not an image")); i.src = src; }); }
+async function toEntry(blob, name){
+  let type = (blob.type || "").toLowerCase();
+  if (!type.startsWith("image/")){
+    const ext = (name.split(".").pop() || "").toLowerCase();
+    type = {jpg:"image/jpeg", jpeg:"image/jpeg", png:"image/png", gif:"image/gif", webp:"image/webp"}[ext] || "";
+  }
+  if (!type.startsWith("image/")) return null;
+  let data = await readAsDataURL(blob.type ? blob : new Blob([blob], {type}));
+  const [w, h] = await imgSize(data);
+  let fmt = type === "image/png" ? "PNG" : "JPEG";
+  if (type !== "image/jpeg" && type !== "image/png"){
+    // jsPDF can't embed GIF/WEBP directly: convert pixel-for-pixel to PNG
+    const im = new Image(); im.src = data; await im.decode();
+    const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+    cv.getContext("2d").drawImage(im, 0, 0); data = cv.toDataURL("image/png"); fmt = "PNG";
+  }
+  return {data, fmt, w, h};
+}
+async function fetchQr(url){
+  const tries = [];
+  try {
+    const u = new URL(url);
+    if (location.protocol.startsWith("http") && PROXY[u.host]) tries.push(location.origin + PROXY[u.host] + u.pathname + u.search);
+  } catch(e){}
+  tries.push(url);
+  for (const t of tries){
+    try {
+      const r = await fetch(t, {mode:"cors", cache:"force-cache"});
+      if (!r.ok) continue;
+      const e = await toEntry(await r.blob(), fileName(url));
+      if (e) return e;
+    } catch(e){}
+  }
+  return null;
+}
+function qrEntry(url){ return qrImages.get(url) || localQr.get(fileName(url)) || null; }
+function qrUrls(){ return [...new Set(guests().filter(g => g.qrMode === "image" && g.qr).map(g => g.qr))]; }
+function missingQr(){ return guests().filter(g => g.qrMode === "image" && g.qr && !qrEntry(g.qr)); }
+function showQrStatus(loading){
+  const urls = qrUrls(), have = urls.filter(u => qrEntry(u)).length;
+  if (!urls.length){ $("qrImgStatus").textContent = ""; $("qrFilesBox").classList.add("hidden"); return; }
+  const miss = urls.length - have;
+  $("qrImgStatus").innerHTML = loading ? `Loading QR images… ${have} of ${urls.length}`
+    : miss ? `<span style="color:var(--err)">${have} of ${urls.length} QR images loaded. ${miss} couldn't be downloaded — add the image files below.</span>`
+           : `<span style="color:var(--ok)">All ${urls.length} QR images loaded — they'll be printed exactly as they are.</span>`;
+  $("qrFilesBox").classList.toggle("hidden", loading || !miss);
+}
+async function loadQrImages(){
+  const seq = ++qrLoadSeq;
+  const todo = qrUrls().filter(u => !qrImages.has(u) && !localQr.has(fileName(u)));
+  showQrStatus(todo.length > 0);
+  let i = 0;
+  async function worker(){
+    while (i < todo.length && seq === qrLoadSeq){
+      const u = todo[i++];
+      qrImages.set(u, await fetchQr(u));
+      if (i % 5 === 0) showQrStatus(true);
+    }
+  }
+  await Promise.all(Array.from({length: 6}, worker));
+  if (seq !== qrLoadSeq) return;
+  [...qrImages].forEach(([u, e]) => { if (!e) qrImages.delete(u); });   // retry failures next time
+  showQrStatus(false); schedulePreview();
+}
+function isImageLinkColumn(col){
+  const vals = records.map(r => r.__links[col] || r[col] || "").filter(Boolean);
+  return vals.length > 0 && vals.filter(v => /^https?:\/\//i.test(v) && IMG_RE.test(v)).length >= vals.length / 2;
+}
+function syncQrUi(){
+  const col = $("map_qr").value;
+  $("qrPatternBox").classList.toggle("hidden", !!col);
+  $("qrModeBox").classList.toggle("hidden", !col);
+  if (col) $("qrMode").value = isImageLinkColumn(col) ? "image" : "text";
+  loadQrImages(); schedulePreview();
+}
 function guests(){
   const cols = {}; Object.keys(FIELD_LABELS).forEach(f => cols[f] = $("map_"+f).value);
   const pattern = $("qrPattern").value;
@@ -289,6 +389,7 @@ function guests(){
     // Nothing is added; an empty cell gives no QR.
     g.qr = cols.qr ? (rec.__links[cols.qr] || rec[cols.qr] || "")
                    : pattern.replace(/\{([^}]+)\}/g, (_, k) => rec[k] || "").trim();
+    g.qrMode = cols.qr && $("qrMode").value === "image" ? "image" : "text";
     return g;
   }).filter(g => g.name);
 }
@@ -333,6 +434,18 @@ function drawQR(doc, text, x, y, size){
     }
   }
 }
+function drawQrImage(doc, url, x, y, size){
+  const e = qrEntry(url);
+  if (!e){   // visible gap marker so a missing image is never silently replaced
+    doc.setDrawColor(160); doc.setLineWidth(0.2); doc.setLineDashPattern([1, 1], 0);
+    doc.rect(x, y, size, size, "S"); doc.setLineDashPattern([], 0);
+    doc.setFont(F, "normal"); doc.setFontSize(6); doc.text("QR image missing", x + size/2, y + size/2, {align:"center"});
+    return;
+  }
+  // the original image, unchanged; non-square images are fitted inside the square
+  const k = Math.min(size / e.w, size / e.h), w = e.w * k, h = e.h * k;
+  doc.addImage(e.data, e.fmt, x + (size - w)/2, y + (size - h)/2, w, h, url, "NONE");
+}
 function drawStack(doc, items, cx, top, bottom, gap=0, start=null){
   const total = items.reduce((s,i)=>s+i.h, 0) + gap * Math.max(items.length - 1, 0);
   let y = start !== null ? start : top + ((bottom - top) - total) / 2;
@@ -342,7 +455,8 @@ function drawStack(doc, items, cx, top, bottom, gap=0, start=null){
     if (it.kind === "text"){
       doc.setFont(it.font, "normal"); doc.setFontSize(it.size);
       doc.text(it.text, cx, y + it.h - (it.h - it.size*0.7*PT)/2, {align:"center"});
-    } else drawQR(doc, it.text, cx - it.h/2, y, it.h);
+    } else if (it.kind === "qrimg") drawQrImage(doc, it.text, cx - it.h/2, y, it.h);
+    else drawQR(doc, it.text, cx - it.h/2, y, it.h);
     y += it.h;
   });
   return topEdge;
@@ -357,7 +471,7 @@ function drawLabel(doc, g, x, y, w, h, L, title, guides){
   const qr = Math.min(L.qr_size_mm, leftW, ih - (fs.global_seq + fs.block_seq) * 1.15 * PT - 2 * gap);
   const left = [];
   if (g.global_seq) left.push(textItem(doc, g.global_seq, FB, fs.global_seq, leftW));
-  if (g.qr) left.push({kind:"qr", text:g.qr, h:qr});
+  if (g.qr) left.push({kind: g.qrMode === "image" ? "qrimg" : "qr", text:g.qr, h:qr});
   if (g.block_seq) left.push(textItem(doc, g.block_seq, FB, fs.block_seq, leftW));
   const right = [];
   if (title) right.push(textItem(doc, title.toUpperCase(), F, fs.event, rightW, 1.5));
@@ -366,7 +480,7 @@ function drawLabel(doc, g, x, y, w, h, L, title, guides){
   if (g.floor_room) right.push(textItem(doc, g.floor_room, F, fs.floor_room, rightW));
   if (L.anchor === "top-right"){
     // pack the block into the box's top-right corner
-    const width = it => it.kind === "qr" ? it.h : tw(doc, it.text, it.font, it.size);
+    const width = it => it.kind === "text" ? tw(doc, it.text, it.font, it.size) : it.h;
     const capOff = items => items.length && items[0].kind === "text" ? (items[0].h - items[0].size*0.7*PT)/2 : 0;
     const rw = Math.max(0, ...right.map(width)), lw = Math.max(0, ...left.map(width));
     const colGap = L.column_gap_mm ?? 4, top = iy - capOff(left);
@@ -440,6 +554,8 @@ async function renderPreview(){
   } catch(err){ box.innerHTML = `<div class="note">Preview unavailable (${err.message}). Downloads still work.</div>`; }
 }
 function download(kind){
+  const miss = missingQr();
+  if (miss.length && !confirm(`${miss.length} guest(s) have no QR image yet (e.g. ${miss.slice(0,3).map(g => g.name).join(", ")}).\n\nTheir labels will show a "QR image missing" box. Build the PDF anyway?`)) return;
   const btn = kind === "labels" ? $("btnLabels") : $("btnEnv");
   btn.disabled = true; status("Building PDF…", "info");
   setTimeout(() => {
@@ -469,6 +585,12 @@ drop.addEventListener("drop", e => { const f = e.dataTransfer.files[0]; if (f) r
 $("btnLabels").onclick = () => download("labels");
 $("btnEnv").onclick = () => download("env");
 $("guides").onchange = schedulePreview;
+$("qrMode").onchange = () => { loadQrImages(); schedulePreview(); };
+$("btnQrFiles").onclick = () => $("qrFiles").click();
+$("qrFiles").onchange = async e => {
+  for (const f of e.target.files){ const en = await toEntry(f, f.name).catch(() => null); if (en) localQr.set(f.name.toLowerCase(), en); }
+  e.target.value = ""; showQrStatus(false); schedulePreview();
+};
 $("showTitle").onchange = schedulePreview;
 $("qrPattern").oninput = schedulePreview;
 $("eventTitle").value = cfg.event_title;

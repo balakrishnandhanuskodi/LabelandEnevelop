@@ -15,6 +15,8 @@
   },
 
   "_qr_note": "The QR encodes the QR column's value exactly (or the cell's hyperlink address). qr_pattern is only used when no QR column is found.",
+  "qr_mode": "auto",
+  "_qr_mode_note": "auto: if the QR column holds links to images (.jpg/.png...), those images are embedded exactly as is; otherwise a QR is made from the text. Force with \"image\" or \"text\".",
   "qr_pattern": "",
 
   "labels": {

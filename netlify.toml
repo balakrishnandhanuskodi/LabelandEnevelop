@@ -1,3 +1,11 @@
 [build]
   publish = "web"
   command = ""
+
+# Same-site proxy for the original QR images, so the browser can read them
+# (the image host doesn't need to allow cross-site downloads).
+[[redirects]]
+  from = "/qrimg/*"
+  to = "https://d31tyzfgyo425y.cloudfront.net/:splat"
+  status = 200
+  force = true

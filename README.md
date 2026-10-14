@@ -26,11 +26,19 @@ To change the web app, edit `webapp/index.template.html`, then run `python webap
 pip install reportlab qrcode openpyxl
 python generate.py guests.xlsx                # PDFs go to ./output
 python generate.py guests.xlsx --guides       # adds label outlines for a test print
+python generate.py guests.xlsx --qr-images ./qr_jpegs   # use QR images already on disk
 ```
 
 Expected columns (auto-detected, case-insensitive): `Global Sequence`, `Block Sequence`, `Name`, `QR URL` (or `QR`, `URL`, `Link`…), `Resort`, `Building`, `Floor`, `Room #`.
 
-**QR code:** encodes the QR column's value exactly as it is in the sheet — nothing is added or changed. If the cell is an Excel hyperlink, the link's address is used (not its display text). An empty cell prints no QR. Only `Name` is required. Alternative header names are listed in `config.json → columns`.
+**QR code — original image, as is:** when the QR column holds links to images (e.g. `https://…cloudfront.net/…/15335_….jpeg`), each image is downloaded and placed on the label/envelope **unchanged** (the JPEG is embedded byte-for-byte; no new QR is generated). If an image can't be downloaded, the label shows a dashed "QR image missing" box and you're warned before the PDF is built.
+- Web app on Netlify: images are fetched through the site's own `/qrimg/` proxy (`netlify.toml`), so the browser isn't blocked.
+- Web app opened as a local file: if the image host blocks the download, click **Add QR image files…** and pick the downloaded images — matched to rows by file name.
+- Python: images are downloaded and cached in `.qr_cache/`, or pass `--qr-images FOLDER` to use files you already have.
+
+If the QR column holds plain text (not image links), a QR containing exactly that text is generated instead. `qr_mode` in `config.json` (`auto` / `image` / `text`) or the "QR code on the label" menu in the web app overrides the choice.
+
+Only `Name` is required. Alternative header names are listed in `config.json → columns`.
 
 ## Adjusting to your label stock / envelope
 
@@ -38,6 +46,7 @@ Everything is in `config.json`:
 
 - `labels` — page size, columns/rows, label width/height, top/left margins, gaps between labels, padding, `stack_gap_mm` (space between number, QR and code), QR size, font sizes.
 - `envelope` — envelope width/height (e.g. C5 = 229 × 162, C6 = 162 × 114, #10 = 241 × 105); `print_area` sets the only box that is printed (`right_mm`, `top_mm` = gap from the envelope's right/top edges, `width_mm`, `height_mm`); `anchor: "top-right"` packs the content into that corner; plus QR size and font sizes.
+- `qr_mode` — `auto` (image links → embed the images as is), `image` or `text`.
 - `qr_pattern` — only used when there's no QR column: builds the QR text from `{Column Name}` placeholders.
 - `event_title` / `print_event_title` — the event name, and whether to print it on labels and envelopes (off by default).
 
@@ -52,7 +61,7 @@ Everything is in `config.json`:
 - `generate.py` — the generator
 - `config.json` — sizes, fonts, columns, QR pattern
 - `fonts/` — Caladea (metric-compatible with Cambria, Apache 2.0)
-- `sample/` — made-up sample data and its output PDFs
+- `sample/` — made-up sample data, stand-in QR images (`sample/qr_images/`) and the output PDFs
 - `web/index.html` — the web app (built file, deploy this)
 - `webapp/` — web app source template + build script
 - `netlify.toml` — Netlify settings
