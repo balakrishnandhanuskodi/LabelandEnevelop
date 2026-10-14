@@ -5,7 +5,7 @@ Turns a guest list (Excel or CSV) into two print-ready PDFs:
 | Output | Layout |
 |---|---|
 | `<file>_labels.pdf` | A4, **12 labels per page** (2 × 6, 105 × 49.5 mm) |
-| `<file>_envelopes.pdf` | One page per guest, **DL envelope 220 × 110 mm** — prints only in the top-right box (104 × 34 mm) |
+| `<file>_envelopes.pdf` | One page per guest, **DL envelope 220 × 110 mm** — prints only in the top-right box (92 × 34 mm) |
 
 Each label and envelope carries the same layout as the original portal: global sequence, QR code and block sequence on the left; name, `Resort - Building` and `Floor: X - Room # Y` on the right; plus the event title.
 
