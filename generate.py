@@ -59,14 +59,21 @@ def read_rows(path: Path):
         with open(path, newline="", encoding="utf-8-sig") as f:
             rows = list(csv.reader(f))
     else:
-        ws = load_workbook(path, read_only=True, data_only=True).worksheets[0]
-        rows = [list(r) for r in ws.iter_rows(values_only=True)]
-    rows = [r for r in rows if any(clean(c) for c in r)]
+        # not read-only, so Excel hyperlink targets are available
+        ws = load_workbook(path, data_only=True).worksheets[0]
+        rows = [[(c.value, c.hyperlink.target if c.hyperlink and c.hyperlink.target else "") for c in r]
+                for r in ws.iter_rows()]
+    if path.suffix.lower() == ".csv":
+        rows = [[(v, "") for v in r] for r in rows]
+    rows = [r for r in rows if any(clean(v) or l for v, l in r)]
     if not rows:
         sys.exit(f"No data found in {path}")
-    headers = [clean(h) for h in rows[0]]
-    records = [{h: clean(r[i]) if i < len(r) else "" for i, h in enumerate(headers) if h}
-               for r in rows[1:]]
+    headers = [clean(v) for v, _ in rows[0]]
+    records = []
+    for r in rows[1:]:
+        rec = {h: clean(r[i][0]) if i < len(r) else "" for i, h in enumerate(headers) if h}
+        rec["__links"] = {h: str(r[i][1]).strip() for i, h in enumerate(headers) if h and i < len(r) and r[i][1]}
+        records.append(rec)
     return headers, records
 
 
@@ -84,11 +91,17 @@ def map_columns(headers, candidates):
 
 
 def fill_pattern(pattern, rec):
-    return re.sub(r"\{([^}]+)\}", lambda m: rec.get(m.group(1), ""), pattern).strip()
+    return re.sub(r"\{([^}]+)\}", lambda m: str(rec.get(m.group(1), "")), pattern).strip()
 
 
 def guest(rec, cols, qr_pattern):
     g = {k: (rec.get(c, "") if c else "") for k, c in cols.items()}
+    # QR = the QR column's value exactly as in the sheet (hyperlink address if the cell is a link).
+    # Nothing is added; an empty cell gives no QR. The pattern is only used when there is no QR column.
+    if cols.get("qr"):
+        g["qr"] = rec["__links"].get(cols["qr"]) or rec.get(cols["qr"], "")
+    else:
+        g["qr"] = fill_pattern(qr_pattern, rec) if qr_pattern else ""
     g["resort_line"] = " - ".join(x for x in (g["resort"], g["building"]) if x)
     parts = []
     if g["floor"]:
@@ -96,7 +109,6 @@ def guest(rec, cols, qr_pattern):
     if g["room"]:
         parts.append(f"Room # {g['room']}")
     g["floor_room"] = " - ".join(parts)
-    g["qr"] = fill_pattern(qr_pattern, rec) or g["name"]
     return g
 
 

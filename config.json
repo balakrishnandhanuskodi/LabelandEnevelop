@@ -5,6 +5,7 @@
 
   "columns": {
     "name": ["Name", "Full name", "full_name"],
+    "qr": ["QR", "QR URL", "QR Link", "QR Code", "QR_Image", "qr_data", "URL", "Link"],
     "global_seq": ["Global Sequence", "global_seq", "Sequence"],
     "block_seq": ["Block Sequence", "block_seq", "Block"],
     "resort": ["Resort", "property"],
@@ -13,7 +14,8 @@
     "room": ["Room #", "Room", "room_no"]
   },
 
-  "qr_pattern": "{Name}",
+  "_qr_note": "The QR encodes the QR column's value exactly (or the cell's hyperlink address). qr_pattern is only used when no QR column is found.",
+  "qr_pattern": "",
 
   "labels": {
     "page_width_mm": 210,

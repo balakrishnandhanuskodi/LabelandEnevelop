@@ -28,7 +28,9 @@ python generate.py guests.xlsx                # PDFs go to ./output
 python generate.py guests.xlsx --guides       # adds label outlines for a test print
 ```
 
-Expected columns (auto-detected, case-insensitive): `Global Sequence`, `Block Sequence`, `Name`, `Resort`, `Building`, `Floor`, `Room #`. Only `Name` is required. Alternative header names are listed in `config.json → columns`.
+Expected columns (auto-detected, case-insensitive): `Global Sequence`, `Block Sequence`, `Name`, `QR URL` (or `QR`, `URL`, `Link`…), `Resort`, `Building`, `Floor`, `Room #`.
+
+**QR code:** encodes the QR column's value exactly as it is in the sheet — nothing is added or changed. If the cell is an Excel hyperlink, the link's address is used (not its display text). An empty cell prints no QR. Only `Name` is required. Alternative header names are listed in `config.json → columns`.
 
 ## Adjusting to your label stock / envelope
 
@@ -36,7 +38,7 @@ Everything is in `config.json`:
 
 - `labels` — page size, columns/rows, label width/height, top/left margins, gaps between labels, padding, `stack_gap_mm` (space between number, QR and code), QR size, font sizes.
 - `envelope` — envelope width/height (e.g. C5 = 229 × 162, C6 = 162 × 114, #10 = 241 × 105); `print_area` sets the only box that is printed (`right_mm`, `top_mm` = gap from the envelope's right/top edges, `width_mm`, `height_mm`); `anchor: "top-right"` packs the content into that corner; plus QR size and font sizes.
-- `qr_pattern` — what the QR encodes, using `{Column Name}` placeholders, e.g. `"E26-{Global Sequence}-{Name}"`.
+- `qr_pattern` — only used when there's no QR column: builds the QR text from `{Column Name}` placeholders.
 - `event_title` / `print_event_title` — the event name, and whether to print it on labels and envelopes (off by default).
 
 ## Printing

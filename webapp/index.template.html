@@ -93,9 +93,12 @@
       <div class="card hidden" id="mapCard">
         <h2><span class="step">2</span>Columns</h2>
         <div id="mapFields"></div>
-        <label class="f" for="qrPattern">QR code content</label>
-        <input type="text" id="qrPattern">
+        <div id="qrPatternBox">
+        <label class="f" for="qrPattern">QR content pattern (only when no QR column is chosen)</label>
+        <input type="text" id="qrPattern" placeholder="e.g. {Name} or E26-{Global Sequence}">
         <div class="hint">Use {Column Name} placeholders, e.g. E26-{Global Sequence}-{Name}</div>
+        </div>
+        
         <label class="f" for="eventTitle">Event title</label>
         <input type="text" id="eventTitle">
         <label class="chk" style="margin-top:6px"><input type="checkbox" id="showTitle"> Print the event title on labels &amp; envelopes</label>
@@ -162,9 +165,10 @@
 /* ---------- defaults (same as config.json in the repo) ---------- */
 const DEFAULTS = {
   event_title: "Entrainment 26",
-  qr_pattern: "{Name}",
+  qr_pattern: "",
   columns: {
     name: ["Name","Full name","full_name"],
+    qr: ["QR","QR URL","QR Link","QR Code","QR_Image","qr_data","URL","Link"],
     global_seq: ["Global Sequence","global_seq","Sequence"],
     block_seq: ["Block Sequence","block_seq","Block"],
     resort: ["Resort","property"],
@@ -181,7 +185,7 @@ const DEFAULTS = {
     anchor:"top-right", column_gap_mm:4, padding_mm:0, stack_gap_mm:2, qr_size_mm:16,
     font_sizes_pt:{event:7, global_seq:16, block_seq:12, name:18, resort:14, floor_room:14} }
 };
-const FIELD_LABELS = {name:"Name (required)", global_seq:"Global sequence", block_seq:"Block sequence",
+const FIELD_LABELS = {name:"Name (required)", qr:"QR code (URL column)", global_seq:"Global sequence", block_seq:"Block sequence",
   resort:"Resort", building:"Building", floor:"Floor", room:"Room #"};
 
 /* Caladea = metric-compatible with Cambria */
@@ -215,11 +219,27 @@ function readFile(file){
   r.onload = e => {
     try {
       const wb = XLSX.read(new Uint8Array(e.target.result), {type:"array"});
-      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, defval:"", raw:true})
-                     .filter(r => r.some(c => clean(c)));
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      if (!ws["!ref"]) return status("No data found in that file.", "err");
+      const rng = XLSX.utils.decode_range(ws["!ref"]);
+      const rows = [];
+      for (let R = rng.s.r; R <= rng.e.r; R++){
+        const vals = [], links = [];
+        for (let C = rng.s.c; C <= rng.e.c; C++){
+          const cell = ws[XLSX.utils.encode_cell({r:R, c:C})];
+          vals.push(cell ? cell.v : "");
+          links.push(cell && cell.l && cell.l.Target ? String(cell.l.Target).trim() : "");
+        }
+        if (vals.some(v => clean(v)) || links.some(Boolean)) rows.push({vals, links});
+      }
       if (!rows.length) return status("No data found in that file.", "err");
-      headers = rows[0].map(clean);
-      records = rows.slice(1).map(r => { const o = {}; headers.forEach((h,i)=>{ if (h) o[h] = clean(r[i]); }); return o; });
+      headers = rows[0].vals.map(clean);
+      records = rows.slice(1).map(r => {
+        const o = {}, l = {};
+        headers.forEach((h,i) => { if (h){ o[h] = clean(r.vals[i]); if (r.links[i]) l[h] = r.links[i]; } });
+        Object.defineProperty(o, "__links", {value:l});
+        return o;
+      });
       buildMapping(); showData();
       $("mapCard").classList.remove("hidden"); $("outCard").classList.remove("hidden");
       status(`Loaded <b>${records.length}</b> rows from ${file.name}.`);
@@ -247,7 +267,8 @@ function buildMapping(){
   box.appendChild(grid);
   Object.keys(FIELD_LABELS).forEach(f => { const s = $("map_"+f); s.value = autoMap(f); s.onchange = schedulePreview; });
   const nameCol = $("map_name").value;
-  $("qrPattern").value = nameCol ? `{${nameCol}}` : cfg.qr_pattern;
+  $("qrPattern").value = "";
+  $("map_qr").addEventListener("change", syncQrUi); syncQrUi();
 }
 function showData(){
   const t = $("dataTable");
@@ -255,6 +276,7 @@ function showData(){
   t.innerHTML = "<thead><tr>" + hs.map(h=>`<th>${h}</th>`).join("") + "</tr></thead><tbody>" +
     records.map(r => "<tr>" + hs.map(h=>`<td>${(r[h]||"").replace(/</g,"&lt;")}</td>`).join("") + "</tr>").join("") + "</tbody>";
 }
+function syncQrUi(){ $("qrPatternBox").classList.toggle("hidden", !!$("map_qr").value); schedulePreview(); }
 function guests(){
   const cols = {}; Object.keys(FIELD_LABELS).forEach(f => cols[f] = $("map_"+f).value);
   const pattern = $("qrPattern").value;
@@ -263,7 +285,10 @@ function guests(){
     g.resort_line = [g.resort, g.building].filter(Boolean).join(" - ");
     const p = []; if (g.floor) p.push(g.floor); if (g.room) p.push(`Room # ${g.room}`);
     g.floor_room = p.join(" - ");
-    g.qr = pattern.replace(/\{([^}]+)\}/g, (_, k) => rec[k] || "").trim() || g.name;
+    // QR = the QR column's value exactly as in the sheet (hyperlink address if the cell is a link).
+    // Nothing is added; an empty cell gives no QR.
+    g.qr = cols.qr ? (rec.__links[cols.qr] || rec[cols.qr] || "")
+                   : pattern.replace(/\{([^}]+)\}/g, (_, k) => rec[k] || "").trim();
     return g;
   }).filter(g => g.name);
 }
