@@ -183,10 +183,7 @@ def draw_label(c, g, x, y, w, h, L, title, guides):
         left.append(("qr", g["qr"], qr, None, None))
     if g["block_seq"]:
         left.append(text_item(g["block_seq"], FONT_BOLD, fs["block_seq"], left_w))
-    left_top = draw_stack(c, left, ix + left_w / 2, iy + ih, iy, gap)
-
-    # right: (optional event title) / name / resort - building / floor - room,
-    # starting level with the top of the left column
+    # right: (optional event title) / name / resort - building / floor - room
     right = []
     if title:
         right.append(text_item(title.upper(), FONT, fs["event"], right_w, 1.5))
@@ -197,6 +194,26 @@ def draw_label(c, g, x, y, w, h, L, title, guides):
         right.append(text_item(g["resort_line"], FONT_BOLD, fs["resort"], right_w))
     if g["floor_room"]:
         right.append(text_item(g["floor_room"], FONT, fs["floor_room"], right_w))
+
+    if L.get("anchor") == "top-right":
+        # Pack the whole block into the box's top-right corner: the widest text line
+        # ends at the right edge and the first line's capitals touch the top edge.
+        def width(it):
+            return it[2] if it[0] == "qr" else pdfmetrics.stringWidth(it[1], it[3], it[4])
+        def cap_offset(items):
+            return (items[0][2] - items[0][4] * 0.7) / 2 if items and items[0][0] == "text" else 0
+        rw = max((width(i) for i in right), default=0)
+        lw = max((width(i) for i in left), default=0)
+        col_gap = L.get("column_gap_mm", 4) * mm
+        top = iy + ih
+        r_cx = ix + iw - rw / 2
+        l_cx = ix + iw - rw - col_gap - lw / 2
+        draw_stack(c, left, l_cx, top, iy, gap, start=top + cap_offset(left))
+        draw_stack(c, right, r_cx, top, iy, start=top + cap_offset(left))
+        return
+
+    # default (labels): left column centred vertically, right block starts level with it
+    left_top = draw_stack(c, left, ix + left_w / 2, iy + ih, iy, gap)
     draw_stack(c, right, right_x + right_w / 2, iy + ih, iy, start=left_top if left else None)
 
 

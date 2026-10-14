@@ -135,7 +135,7 @@
         <details>
           <summary>Printing tips</summary>
           <ul class="tips">
-            <li>Print at <b>Actual size / 100 %</b>, never "Fit to page".</li>
+            <li>Print at <b>Actual size / 100 %</b>. Turn off "Fit to page" / "Fit to printable area": scaling pulls everything toward the centre.</li>
             <li>First sheet: tick "Draw outlines", print on plain paper, hold it against the label sheet or an envelope.</li>
             <li>Envelopes: set the printer's paper size to the envelope (DL 220 × 110 mm) and feed per the printer's guide.</li>
           </ul>
@@ -177,8 +177,8 @@ const DEFAULTS = {
     padding_mm:4, stack_gap_mm:2, qr_size_mm:18,
     font_sizes_pt:{event:8, global_seq:18, block_seq:14, name:20, resort:16, floor_room:16} },
   envelope: { width_mm:220, height_mm:110,
-    print_area:{right_mm:1, top_mm:5, width_mm:92, height_mm:34},
-    padding_mm:1, stack_gap_mm:2, qr_size_mm:16,
+    print_area:{right_mm:2, top_mm:1, width_mm:92, height_mm:34},
+    anchor:"top-right", column_gap_mm:4, padding_mm:0, stack_gap_mm:2, qr_size_mm:16,
     font_sizes_pt:{event:7, global_seq:16, block_seq:12, name:18, resort:14, floor_room:14} }
 };
 const FIELD_LABELS = {name:"Name (required)", global_seq:"Global sequence", block_seq:"Block sequence",
@@ -189,7 +189,7 @@ const FONT_REG_B64 = "__CALADEA_REG__";
 const FONT_BOLD_B64 = "__CALADEA_BOLD__";
 
 /* ---------- state ---------- */
-const STORE = "e26-print-settings-v2";
+const STORE = "e26-print-settings-v3";
 let cfg = loadCfg(), headers = [], records = [], fileStem = "guests", view = "labels", previewTimer = null;
 
 function clone(o){ return JSON.parse(JSON.stringify(o)); }
@@ -334,12 +334,22 @@ function drawLabel(doc, g, x, y, w, h, L, title, guides){
   if (g.global_seq) left.push(textItem(doc, g.global_seq, FB, fs.global_seq, leftW));
   if (g.qr) left.push({kind:"qr", text:g.qr, h:qr});
   if (g.block_seq) left.push(textItem(doc, g.block_seq, FB, fs.block_seq, leftW));
-  const leftTop = drawStack(doc, left, ix + leftW/2, iy, iy + ih, gap);
   const right = [];
   if (title) right.push(textItem(doc, title.toUpperCase(), F, fs.event, rightW, 1.5));
   if (g.name){ const [lines, s] = wrapTwo(doc, g.name, FB, fs.name, rightW, 11); lines.forEach(l => right.push({kind:"text", text:l, font:FB, size:s, h:s*1.15*PT})); }
   if (g.resort_line) right.push(textItem(doc, g.resort_line, FB, fs.resort, rightW));
   if (g.floor_room) right.push(textItem(doc, g.floor_room, F, fs.floor_room, rightW));
+  if (L.anchor === "top-right"){
+    // pack the block into the box's top-right corner
+    const width = it => it.kind === "qr" ? it.h : tw(doc, it.text, it.font, it.size);
+    const capOff = items => items.length && items[0].kind === "text" ? (items[0].h - items[0].size*0.7*PT)/2 : 0;
+    const rw = Math.max(0, ...right.map(width)), lw = Math.max(0, ...left.map(width));
+    const colGap = L.column_gap_mm ?? 4, top = iy - capOff(left);
+    drawStack(doc, left, ix + iw - rw - colGap - lw/2, iy, iy + ih, gap, top);
+    drawStack(doc, right, ix + iw - rw/2, iy, iy + ih, 0, top);
+    return;
+  }
+  const leftTop = drawStack(doc, left, ix + leftW/2, iy, iy + ih, gap);
   drawStack(doc, right, rightX + rightW/2, iy, iy + ih, 0, left.length ? leftTop : null);
 }
 function buildLabels(list, guides){

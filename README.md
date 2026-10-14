@@ -5,7 +5,7 @@ Turns a guest list (Excel or CSV) into two print-ready PDFs:
 | Output | Layout |
 |---|---|
 | `<file>_labels.pdf` | A4, **12 labels per page** (2 × 6, 105 × 49.5 mm) |
-| `<file>_envelopes.pdf` | One page per guest, **DL envelope 220 × 110 mm** — prints only in a 92 × 34 mm box in the top-right corner (1 mm from the right edge, 5 mm from the top — text ends about 6 mm from the edge) |
+| `<file>_envelopes.pdf` | One page per guest, **DL envelope 220 × 110 mm** — content packed into the top-right corner (about 2 mm from the right edge, 1 mm from the top) |
 
 Each label and envelope: global sequence, QR code and block sequence stacked on the left (2 mm apart); name, `Resort - Building` and `X - Room # Y` (floor, then room) on the right, starting level with the sequence number. The event title is off by default (`print_event_title` in `config.json`, or the tick box in the web app).
 
@@ -35,13 +35,13 @@ Expected columns (auto-detected, case-insensitive): `Global Sequence`, `Block Se
 Everything is in `config.json`:
 
 - `labels` — page size, columns/rows, label width/height, top/left margins, gaps between labels, padding, `stack_gap_mm` (space between number, QR and code), QR size, font sizes.
-- `envelope` — envelope width/height (e.g. C5 = 229 × 162, C6 = 162 × 114, #10 = 241 × 105); `print_area` sets the only box that is printed (`right_mm`, `top_mm` = gap from the envelope's right/top edges, `width_mm`, `height_mm`); plus QR size and font sizes.
+- `envelope` — envelope width/height (e.g. C5 = 229 × 162, C6 = 162 × 114, #10 = 241 × 105); `print_area` sets the only box that is printed (`right_mm`, `top_mm` = gap from the envelope's right/top edges, `width_mm`, `height_mm`); `anchor: "top-right"` packs the content into that corner; plus QR size and font sizes.
 - `qr_pattern` — what the QR encodes, using `{Column Name}` placeholders, e.g. `"E26-{Global Sequence}-{Name}"`.
 - `event_title` / `print_event_title` — the event name, and whether to print it on labels and envelopes (off by default).
 
 ## Printing
 
-- Print at **Actual size / 100 %** — never "Fit to page".
+- Print at **Actual size / 100 %** — turn off "Fit to page" / "Fit to printable area". Scaling shrinks everything toward the centre, so envelope text lands well inside the corner.
 - Do a first sheet on plain paper with `--guides`, hold it against the label sheet (or an envelope) to check alignment, then adjust `margin_top_mm` / `margin_left_mm` (labels) or `print_area` (envelopes) if needed.
 - Envelopes: set the printer's paper size to the envelope size and feed per the printer's envelope guide.
 
