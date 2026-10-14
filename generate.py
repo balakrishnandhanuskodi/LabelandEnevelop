@@ -4,7 +4,8 @@ Entrainment 26 - Label & Envelope PDF generator.
 
 Reads an Excel/CSV guest list and writes two print-ready PDFs:
   * <name>_labels.pdf    - 12 labels per A4 page (2 x 6), sizes from config.json
-  * <name>_envelopes.pdf - one envelope per guest (DL 220 x 110 mm by default)
+  * <name>_envelopes.pdf - one envelope per guest (DL 220 x 110 mm); prints only in the
+                           top-right print area set in config.json
 
 Usage:
   python generate.py data.xlsx                 # writes to ./output
@@ -208,47 +209,17 @@ def build_labels(guests, cfg, out, guides):
 
 
 # ---------------------------------------------------------------- envelopes
-def build_envelopes(guests, cfg, out):
+def build_envelopes(guests, cfg, out, guides=False):
+    """Prints only inside envelope.print_area, using the same layout as a label."""
     E = cfg["envelope"]
-    fs = E["font_sizes_pt"]
+    A = E["print_area"]
     w, h = E["width_mm"] * mm, E["height_mm"] * mm
-    m = 10 * mm
+    aw, ah = A["width_mm"] * mm, A["height_mm"] * mm
+    x, y = A["left_mm"] * mm, h - A["top_mm"] * mm - ah
     c = canvas.Canvas(str(out), pagesize=(w, h))
     c.setTitle(f"{cfg['event_title']} - Envelopes")
     for g in guests:
-        # event title, top-left
-        c.setFont(FONT_BOLD, fs["event"])
-        c.drawString(m, h - m - fs["event"] * 0.7, cfg["event_title"].upper())
-        if cfg.get("event_subtitle"):
-            c.setFont(FONT, fs["event"] * 0.7)
-            c.drawString(m, h - m - fs["event"] * 1.7, cfg["event_subtitle"])
-        c.setLineWidth(0.8)
-        c.line(m, h - m - fs["event"] * 1.1 - (fs["event"] * 0.9 if cfg.get("event_subtitle") else 0),
-               m + 60 * mm, h - m - fs["event"] * 1.1 - (fs["event"] * 0.9 if cfg.get("event_subtitle") else 0))
-
-        # left column: global seq, QR, block seq (matches the label)
-        col_w = max(E["qr_size_mm"] * mm, 34 * mm)
-        left = []
-        if g["global_seq"]:
-            left.append(text_item(g["global_seq"], FONT_BOLD, fs["global_seq"], col_w))
-        if g["qr"]:
-            left.append(("qr", g["qr"], E["qr_size_mm"] * mm, None, None))
-        if g["block_seq"]:
-            left.append(text_item(g["block_seq"], FONT_BOLD, fs["block_seq"], col_w, 1.4))
-        draw_stack(c, left, m + col_w / 2, h - m - 12 * mm, m)
-
-        # addressee block, right-of-centre
-        ax = m + col_w + 15 * mm
-        aw = w - ax - m
-        block = []
-        if g["name"]:
-            lines, s = wrap_two_lines(g["name"], FONT_BOLD, fs["name"], aw, 14)
-            block += [("text", l, s * 1.2, FONT_BOLD, s) for l in lines]
-        if g["resort_line"]:
-            block.append(text_item(g["resort_line"], FONT_BOLD, fs["resort"], aw, 1.3))
-        if g["floor_room"]:
-            block.append(text_item(g["floor_room"], FONT, fs["floor_room"], aw, 1.3))
-        draw_stack(c, block, ax + aw / 2, h - m - 12 * mm, m)
+        draw_label(c, g, x, y, aw, ah, E, cfg["event_title"], guides)
         c.showPage()
     c.save()
 
@@ -259,7 +230,7 @@ def main():
     ap.add_argument("data", type=Path, help="Excel (.xlsx) or CSV guest list")
     ap.add_argument("--config", type=Path, default=HERE / "config.json")
     ap.add_argument("--out", type=Path, default=Path("output"))
-    ap.add_argument("--guides", action="store_true", help="draw label outlines for an alignment test print")
+    ap.add_argument("--guides", action="store_true", help="draw label / envelope print-area outlines for an alignment test print")
     a = ap.parse_args()
 
     cfg = json.loads(a.config.read_text(encoding="utf-8"))
@@ -277,7 +248,7 @@ def main():
     stem = a.data.stem
     lab, env = a.out / f"{stem}_labels.pdf", a.out / f"{stem}_envelopes.pdf"
     pages = build_labels(guests, cfg, lab, a.guides)
-    build_envelopes(guests, cfg, env)
+    build_envelopes(guests, cfg, env, a.guides)
     print(f"{len(guests)} guests -> {lab} ({pages} pages), {env} ({len(guests)} envelopes)")
 
 

@@ -40,14 +40,22 @@
   "envelope": {
     "width_mm": 220,
     "height_mm": 110,
-    "qr_size_mm": 30,
+    "_print_area_note": "Only this box is printed (the top-right window area). Measured from the left and top edges of the envelope.",
+    "print_area": {
+      "left_mm": 113,
+      "top_mm": 4,
+      "width_mm": 104,
+      "height_mm": 34
+    },
+    "padding_mm": 2,
+    "qr_size_mm": 16,
     "font_sizes_pt": {
-      "event": 14,
-      "global_seq": 28,
-      "block_seq": 16,
-      "name": 26,
-      "resort": 18,
-      "floor_room": 18
+      "event": 7,
+      "global_seq": 16,
+      "block_seq": 12,
+      "name": 18,
+      "resort": 14,
+      "floor_room": 14
     }
   }
 }
