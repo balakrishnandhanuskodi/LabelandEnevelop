@@ -121,7 +121,8 @@
         <h2><span class="step">3</span>Generate</h2>
         <div class="btns">
           <button id="btnLabels">Labels PDF</button>
-          <button id="btnEnv">Envelopes PDF</button>
+          <button id="btnEnv">Envelopes PDF · Standard</button>
+          <button id="btnLeo" style="grid-column:1 / -1">Envelopes PDF · Leonia</button>
         </div>
         <label class="chk"><input type="checkbox" id="guides"> Draw outlines (alignment test print)</label>
 
@@ -145,6 +146,12 @@
             <div><label class="f">Box width mm</label><input type="number" step="1" data-k="envelope.print_area.width_mm"></div>
             <div><label class="f">Box height mm</label><input type="number" step="1" data-k="envelope.print_area.height_mm"></div>
           </div>
+          <h3>Leonia envelope</h3>
+          <div class="hint">Same as the standard envelope, but the content starts below the 4.5 cm green band.</div>
+          <div class="two">
+            <div><label class="f">Gap from top mm</label><input type="number" step="0.5" data-k="envelope_types.leonia.print_area.top_mm"></div>
+            <div><label class="f">Gap from right mm</label><input type="number" step="0.5" data-k="envelope_types.leonia.print_area.right_mm"></div>
+          </div>
           <div class="btns" style="grid-template-columns:1fr"><button class="ghost" id="btnReset">Reset to defaults</button></div>
         </details>
 
@@ -164,6 +171,7 @@
         <div class="tabs">
           <button class="tab on" data-v="labels">Labels</button>
           <button class="tab" data-v="env">Envelopes</button>
+          <button class="tab" data-v="leo">Leonia</button>
           <button class="tab" data-v="data">Data</button>
         </div>
         <div id="viewEmpty" class="empty">Upload the guest list to see a live preview of the labels and envelopes here.</div>
@@ -196,7 +204,11 @@ const DEFAULTS = {
   envelope: { width_mm:220, height_mm:110,
     print_area:{right_mm:2, top_mm:1, width_mm:92, height_mm:34},
     anchor:"top-right", column_gap_mm:4, padding_mm:0, stack_gap_mm:2, qr_size_mm:16,
-    font_sizes_pt:{event:7, global_seq:16, block_seq:12, name:18, resort:14, floor_room:14} }
+    font_sizes_pt:{event:7, global_seq:16, block_seq:12, name:18, resort:14, floor_room:14} },
+  envelope_types: {
+    // Leonia: 4.5 cm green band at the top is left blank; content starts 1.5 mm below it
+    leonia: { print_area:{top_mm:46.5, right_mm:2} }
+  }
 };
 const FIELD_LABELS = {name:"Name (required)", qr:"QR code (URL column)", global_seq:"Global sequence", block_seq:"Block sequence",
   resort:"Resort", building:"Building", floor:"Floor", room:"Room #"};
@@ -206,7 +218,7 @@ const FONT_REG_B64 = "__CALADEA_REG__";
 const FONT_BOLD_B64 = "__CALADEA_BOLD__";
 
 /* ---------- state ---------- */
-const STORE = "e26-print-settings-v3";
+const STORE = "e26-print-settings-v4";
 let cfg = loadCfg(), headers = [], records = [], fileStem = "guests", view = "labels", previewTimer = null;
 
 function clone(o){ return JSON.parse(JSON.stringify(o)); }
@@ -214,7 +226,7 @@ function loadCfg(){
   try { const s = localStorage.getItem(STORE); if (s) return Object.assign(clone(DEFAULTS), JSON.parse(s)); } catch(e){}
   return clone(DEFAULTS);
 }
-function saveCfg(){ try { localStorage.setItem(STORE, JSON.stringify({labels:cfg.labels, envelope:cfg.envelope, event_title:cfg.event_title})); } catch(e){} }
+function saveCfg(){ try { localStorage.setItem(STORE, JSON.stringify({labels:cfg.labels, envelope:cfg.envelope, envelope_types:cfg.envelope_types, event_title:cfg.event_title})); } catch(e){} }
 const $ = id => document.getElementById(id);
 function status(msg, kind="ok"){ $("status").innerHTML = msg ? `<div class="status ${kind}">${msg}</div>` : ""; }
 function getK(path){ return path.split(".").reduce((o,k)=>o[k], cfg); }
@@ -504,10 +516,16 @@ function buildLabels(list, guides){
   });
   return doc;
 }
-function buildEnvelopes(list, guides){
-  const E = cfg.envelope, A = E.print_area, orient = E.width_mm > E.height_mm ? "landscape" : "portrait";
+function deepMerge(base, over){
+  const out = clone(base);
+  Object.entries(over || {}).forEach(([k, v]) => { out[k] = (v && typeof v === "object" && !Array.isArray(v) && out[k] && typeof out[k] === "object") ? deepMerge(out[k], v) : v; });
+  return out;
+}
+const ENV_TYPES = {env: "standard", leo: "leonia"};
+function buildEnvelopes(list, guides, type = "standard"){
+  const E = type === "standard" ? cfg.envelope : deepMerge(cfg.envelope, cfg.envelope_types[type]), A = E.print_area, orient = E.width_mm > E.height_mm ? "landscape" : "portrait";
   const doc = newDoc(E.width_mm, E.height_mm);
-  doc.setProperties({title: `${cfg.event_title} - Envelopes`});
+  doc.setProperties({title: `${cfg.event_title} - Envelopes${type === "standard" ? "" : " (" + type + ")"}`});
   const x = E.width_mm - A.right_mm - A.width_mm, y = A.top_mm;
   list.forEach((g, i) => {
     if (i) doc.addPage([E.width_mm, E.height_mm], orient);
@@ -522,7 +540,7 @@ function current(kind, forPreview){
   let list = guests();
   if (!list.length) { status("No rows have a name. Check the Name column mapping.", "err"); return null; }
   if (forPreview) list = list.slice(0, kind === "labels" ? cfg.labels.columns * cfg.labels.rows : 6);
-  return kind === "labels" ? buildLabels(list, $("guides").checked) : buildEnvelopes(list, $("guides").checked);
+  return kind === "labels" ? buildLabels(list, $("guides").checked) : buildEnvelopes(list, $("guides").checked, ENV_TYPES[kind]);
 }
 function schedulePreview(){ clearTimeout(previewTimer); previewTimer = setTimeout(renderPreview, 250); }
 let renderSeq = 0;
@@ -537,7 +555,7 @@ async function renderPreview(){
     const pages = Math.min(pdf.numPages, view === "labels" ? 1 : 4);
     const frag = document.createDocumentFragment();
     const note = document.createElement("div"); note.className = "note";
-    note.textContent = view === "labels" ? "Preview: first page" : `Preview: first ${pages} envelopes`;
+    note.textContent = view === "labels" ? "Preview: first page" : `Preview: first ${pages} ${view === "leo" ? "Leonia " : ""}envelopes`;
     frag.appendChild(note);
     const width = Math.max(320, box.clientWidth - 28);
     for (let i = 1; i <= pages; i++){
@@ -556,15 +574,16 @@ async function renderPreview(){
 function download(kind){
   const miss = missingQr();
   if (miss.length && !confirm(`${miss.length} guest(s) have no QR image yet (e.g. ${miss.slice(0,3).map(g => g.name).join(", ")}).\n\nTheir labels will show a "QR image missing" box. Build the PDF anyway?`)) return;
-  const btn = kind === "labels" ? $("btnLabels") : $("btnEnv");
+  const btn = {labels: $("btnLabels"), env: $("btnEnv"), leo: $("btnLeo")}[kind];
   btn.disabled = true; status("Building PDF…", "info");
   setTimeout(() => {
     try {
       const n = guests().length, doc = current(kind, false);
       if (doc){
-        doc.save(`${fileStem}_${kind === "labels" ? "labels" : "envelopes"}.pdf`);
+        const what = {labels: "labels", env: "envelopes", leo: "envelopes_leonia"}[kind];
+        doc.save(`${fileStem}_${what}.pdf`);
         const pages = kind === "labels" ? Math.ceil(n / (cfg.labels.columns * cfg.labels.rows)) : n;
-        status(`Saved ${kind === "labels" ? "labels" : "envelopes"} PDF: ${n} guests, ${pages} page${pages>1?"s":""}. Print at Actual size / 100 %.`);
+        status(`Saved ${what.replace("_", " (") + (kind === "leo" ? ")" : "")} PDF: ${n} guests, ${pages} page${pages>1?"s":""}. Print at Actual size / 100 %.`);
       }
     } catch(err){ status("Couldn't build the PDF: " + err.message, "err"); }
     btn.disabled = false;
@@ -584,6 +603,7 @@ const drop = $("drop");
 drop.addEventListener("drop", e => { const f = e.dataTransfer.files[0]; if (f) readFile(f); });
 $("btnLabels").onclick = () => download("labels");
 $("btnEnv").onclick = () => download("env");
+$("btnLeo").onclick = () => download("leo");
 $("guides").onchange = schedulePreview;
 $("qrMode").onchange = () => { loadQrImages(); schedulePreview(); };
 $("btnQrFiles").onclick = () => $("qrFiles").click();

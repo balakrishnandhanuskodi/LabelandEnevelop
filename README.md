@@ -5,7 +5,8 @@ Turns a guest list (Excel or CSV) into two print-ready PDFs:
 | Output | Layout |
 |---|---|
 | `<file>_labels.pdf` | A4, **12 labels per page** (2 × 6, 105 × 49.5 mm) |
-| `<file>_envelopes.pdf` | One page per guest, **DL envelope 220 × 110 mm** — content packed into the top-right corner (about 2 mm from the right edge, 1 mm from the top) |
+| `<file>_envelopes.pdf` | **Standard envelope** — one page per guest, DL 220 × 110 mm, content packed into the top-right corner (about 2 mm from the right edge, 1 mm from the top) |
+| `<file>_envelopes_leonia.pdf` | **Leonia envelope** — same layout, but the 4.5 cm green band at the top is left blank: content starts 1.5 mm below it (46.5 mm from the top), 2 mm from the right edge |
 
 Each label and envelope: global sequence, QR code and block sequence stacked on the left (2 mm apart); name, `Resort - Building` and `X - Room # Y` (floor, then room) on the right, starting level with the sequence number. The event title is off by default (`print_event_title` in `config.json`, or the tick box in the web app).
 
@@ -27,6 +28,7 @@ pip install reportlab qrcode openpyxl
 python generate.py guests.xlsx                # PDFs go to ./output
 python generate.py guests.xlsx --guides       # adds label outlines for a test print
 python generate.py guests.xlsx --qr-images ./qr_jpegs   # use QR images already on disk
+python generate.py guests.xlsx --envelopes leonia       # only the Leonia envelopes (default: all types)
 ```
 
 Expected columns (auto-detected, case-insensitive): `Global Sequence`, `Block Sequence`, `Name`, `QR URL` (or `QR`, `URL`, `Link`…), `Resort`, `Building`, `Floor`, `Room #`.
@@ -46,6 +48,7 @@ Everything is in `config.json`:
 
 - `labels` — page size, columns/rows, label width/height, top/left margins, gaps between labels, padding, `stack_gap_mm` (space between number, QR and code), QR size, font sizes.
 - `envelope` — envelope width/height (e.g. C5 = 229 × 162, C6 = 162 × 114, #10 = 241 × 105); `print_area` sets the only box that is printed (`right_mm`, `top_mm` = gap from the envelope's right/top edges, `width_mm`, `height_mm`); `anchor: "top-right"` packs the content into that corner; plus QR size and font sizes.
+- `envelope_types` — extra envelope types, each listing only what differs from the standard `envelope` (e.g. `leonia` → `print_area.top_mm: 46.5`). Each type gets its own PDF and its own button/tab in the web app.
 - `qr_mode` — `auto` (image links → embed the images as is), `image` or `text`.
 - `qr_pattern` — only used when there's no QR column: builds the QR text from `{Column Name}` placeholders.
 - `event_title` / `print_event_title` — the event name, and whether to print it on labels and envelopes (off by default).

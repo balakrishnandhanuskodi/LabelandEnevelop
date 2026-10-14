@@ -312,9 +312,24 @@ def build_labels(guests, cfg, out, guides):
 
 
 # ---------------------------------------------------------------- envelopes
-def build_envelopes(guests, cfg, out, guides=False):
-    """Prints only inside envelope.print_area, using the same layout as a label."""
-    E = cfg["envelope"]
+def deep_merge(base, over):
+    out = json.loads(json.dumps(base))
+    for k, v in over.items():
+        out[k] = deep_merge(out[k], v) if isinstance(v, dict) and isinstance(out.get(k), dict) else v
+    return out
+
+
+def envelope_types(cfg):
+    """standard = cfg.envelope; every other type = standard + its overrides (e.g. leonia)."""
+    types = {"standard": cfg["envelope"]}
+    for name, over in cfg.get("envelope_types", {}).items():
+        types[name] = deep_merge(cfg["envelope"], {k: v for k, v in over.items() if not k.startswith("_")})
+    return types
+
+
+def build_envelopes(guests, cfg, out, guides=False, E=None):
+    """Prints only inside the envelope's print_area, using the same layout as a label."""
+    E = E or cfg["envelope"]
     A = E["print_area"]
     w, h = E["width_mm"] * mm, E["height_mm"] * mm
     aw, ah = A["width_mm"] * mm, A["height_mm"] * mm
@@ -335,6 +350,8 @@ def main():
     ap.add_argument("--config", type=Path, default=HERE / "config.json")
     ap.add_argument("--out", type=Path, default=Path("output"))
     ap.add_argument("--qr-images", type=Path, help="folder of QR image files to use instead of downloading (matched by file name)")
+    ap.add_argument("--envelopes", default="all",
+                    help="envelope types to build, comma-separated (standard, leonia) or 'all' (default)")
     ap.add_argument("--guides", action="store_true", help="draw label / envelope print-area outlines for an alignment test print")
     a = ap.parse_args()
 
@@ -364,10 +381,20 @@ def main():
             print(f"    missing: {url}  ({err})")
     a.out.mkdir(parents=True, exist_ok=True)
     stem = a.data.stem
-    lab, env = a.out / f"{stem}_labels.pdf", a.out / f"{stem}_envelopes.pdf"
+    lab = a.out / f"{stem}_labels.pdf"
     pages = build_labels(guests, cfg, lab, a.guides)
-    build_envelopes(guests, cfg, env, a.guides)
-    print(f"{len(guests)} guests -> {lab} ({pages} pages), {env} ({len(guests)} envelopes)")
+    types = envelope_types(cfg)
+    wanted = list(types) if a.envelopes == "all" else [t.strip() for t in a.envelopes.split(",")]
+    env_files = []
+    for t in wanted:
+        if t not in types:
+            sys.exit(f"Unknown envelope type '{t}'. Known: {', '.join(types)}")
+        env = a.out / (f"{stem}_envelopes.pdf" if t == "standard" else f"{stem}_envelopes_{t}.pdf")
+        build_envelopes(guests, cfg, env, a.guides, types[t])
+        env_files.append(str(env))
+    print(f"{len(guests)} guests -> {lab} ({pages} pages)")
+    for f in env_files:
+        print(f"  envelopes -> {f} ({len(guests)} envelopes)")
 
 
 if __name__ == "__main__":
