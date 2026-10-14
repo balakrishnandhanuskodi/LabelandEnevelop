@@ -209,7 +209,7 @@ const DEFAULTS = {
     font_sizes_pt:{event:7, global_seq:16, block_seq:12, name:18, resort:14, floor_room:14} },
   envelope_types: {
     // Leonia: 4.5 cm green band at the top is left blank; content starts 1.5 mm below it
-    leonia: { width_mm:220, height_mm:110, print_area:{top_mm:46.5, right_mm:2} }
+    leonia: { width_mm:241, height_mm:105, print_area:{top_mm:46.5, right_mm:2} }
   }
 };
 const FIELD_LABELS = {name:"Name (required)", qr:"QR code (URL column)", global_seq:"Global sequence", block_seq:"Block sequence",
@@ -220,7 +220,7 @@ const FONT_REG_B64 = "__CALADEA_REG__";
 const FONT_BOLD_B64 = "__CALADEA_BOLD__";
 
 /* ---------- state ---------- */
-const STORE = "e26-print-settings-v5";
+const STORE = "e26-print-settings-v6";
 let cfg = loadCfg(), headers = [], records = [], fileStem = "guests", view = "labels", previewTimer = null;
 
 function clone(o){ return JSON.parse(JSON.stringify(o)); }

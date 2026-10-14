@@ -6,7 +6,7 @@ Turns a guest list (Excel or CSV) into two print-ready PDFs:
 |---|---|
 | `<file>_labels.pdf` | A4, **12 labels per page** (2 × 6, 105 × 49.5 mm) |
 | `<file>_envelopes.pdf` | **Standard envelope** — one page per guest, DL 220 × 110 mm, content packed into the top-right corner (about 2 mm from the right edge, 1 mm from the top) |
-| `<file>_envelopes_leonia.pdf` | **Leonia envelope** — same layout, but the 4.5 cm green band at the top is left blank: content starts 1.5 mm below it (46.5 mm from the top), 2 mm from the right edge |
+| `<file>_envelopes_leonia.pdf` | **Leonia envelope** — #10 size, 241 × 105 mm; same layout, but the 4.5 cm green band at the top is left blank: content starts 1.5 mm below it (46.5 mm from the top), 2 mm from the right edge |
 
 Each label and envelope: global sequence, QR code and block sequence stacked on the left (2 mm apart); name, `Resort - Building` and `X - Room # Y` (floor, then room) on the right, starting level with the sequence number. The event title is off by default (`print_event_title` in `config.json`, or the tick box in the web app).
 
