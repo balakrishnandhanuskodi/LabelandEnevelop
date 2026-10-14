@@ -42,12 +42,12 @@
     "height_mm": 110,
     "_print_area_note": "Only this box is printed, in the top-right corner. right_mm / top_mm = gap from the envelope's right / top edge.",
     "print_area": {
-      "right_mm": 5.5,
+      "right_mm": 1,
       "top_mm": 5,
       "width_mm": 92,
       "height_mm": 34
     },
-    "padding_mm": 2,
+    "padding_mm": 1,
     "qr_size_mm": 16,
     "font_sizes_pt": {
       "event": 7,
