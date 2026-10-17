@@ -119,6 +119,11 @@
 
       <div class="card hidden" id="outCard">
         <h2><span class="step">3</span>Generate</h2>
+        <label class="f" for="labelCopies">Labels per guest</label>
+        <select id="labelCopies">
+          <option value="1">1 label per guest</option>
+          <option value="4">4 labels per guest (QR on the first only)</option>
+        </select>
         <div class="btns">
           <button id="btnLabels">Labels PDF</button>
           <button id="btnEnv">Envelopes PDF · Standard</button>
@@ -199,7 +204,7 @@ const DEFAULTS = {
     floor: ["Floor","level"],
     room: ["Room #","Room","room_no"]
   },
-  labels: { page_width_mm:210, page_height_mm:297, columns:2, rows:6,
+  labels: { page_width_mm:210, page_height_mm:297, columns:2, rows:6, copies:1,
     label_width_mm:105, label_height_mm:49.5, margin_top_mm:0, margin_left_mm:0, gap_x_mm:0, gap_y_mm:0,
     padding_mm:4, stack_gap_mm:2, qr_size_mm:18,
     font_sizes_pt:{event:8, global_seq:18, block_seq:14, name:20, resort:16, floor_room:16} },
@@ -502,8 +507,18 @@ function drawLabel(doc, g, x, y, w, h, L, title, guides){
     drawStack(doc, right, ix + iw - rw/2, iy, iy + ih, 0, top);
     return;
   }
-  const leftTop = drawStack(doc, left, ix + leftW/2, iy, iy + ih, gap);
+  // copies without a QR keep the same top position as the label that has one
+  let start = null;
+  if (g.qrSlot && !g.qr){ const full = left.reduce((s,i)=>s+i.h, 0) + qr + gap * left.length; start = iy + (ih - full)/2; }
+  const leftTop = drawStack(doc, left, ix + leftW/2, iy, iy + ih, gap, start);
   drawStack(doc, right, rightX + rightW/2, iy, iy + ih, 0, left.length ? leftTop : null);
+}
+function labelCopies(){ return parseInt($("labelCopies").value, 10) || 1; }
+// Repeat each guest N times in a row; only the first copy keeps the QR.
+function expandCopies(list, n){
+  const out = [];
+  list.forEach(g => { out.push(g); for (let k = 1; k < n; k++) out.push(Object.assign({}, g, {qr: "", qrSlot: true})); });
+  return out;
 }
 function buildLabels(list, guides){
   const L = cfg.labels, per = L.columns * L.rows;
@@ -541,6 +556,7 @@ function current(kind, forPreview){
   cfg.event_title = $("eventTitle").value;
   let list = guests();
   if (!list.length) { status("No rows have a name. Check the Name column mapping.", "err"); return null; }
+  if (kind === "labels") list = expandCopies(list, labelCopies());
   if (forPreview) list = list.slice(0, kind === "labels" ? cfg.labels.columns * cfg.labels.rows : 6);
   return kind === "labels" ? buildLabels(list, $("guides").checked) : buildEnvelopes(list, $("guides").checked, ENV_TYPES[kind]);
 }
@@ -584,8 +600,9 @@ function download(kind){
       if (doc){
         const what = {labels: "labels", env: "envelopes", leo: "envelopes_leonia"}[kind];
         doc.save(`${fileStem}_${what}.pdf`);
-        const pages = kind === "labels" ? Math.ceil(n / (cfg.labels.columns * cfg.labels.rows)) : n;
-        status(`Saved ${what.replace("_", " (") + (kind === "leo" ? ")" : "")} PDF: ${n} guests, ${pages} page${pages>1?"s":""}. Print at Actual size / 100 %.`);
+        const copies = kind === "labels" ? labelCopies() : 1;
+        const pages = kind === "labels" ? Math.ceil(n * copies / (cfg.labels.columns * cfg.labels.rows)) : n;
+        status(`Saved ${what.replace("_", " (") + (kind === "leo" ? ")" : "")} PDF: ${n} guests${copies > 1 ? " × " + copies + " labels" : ""}, ${pages} page${pages>1?"s":""}. Print at Actual size / 100 %.`);
       }
     } catch(err){ status("Couldn't build the PDF: " + err.message, "err"); }
     btn.disabled = false;
@@ -607,6 +624,8 @@ $("btnLabels").onclick = () => download("labels");
 $("btnEnv").onclick = () => download("env");
 $("btnLeo").onclick = () => download("leo");
 $("guides").onchange = schedulePreview;
+$("labelCopies").value = String(cfg.labels.copies || 1);
+$("labelCopies").onchange = () => { cfg.labels.copies = labelCopies(); saveCfg(); schedulePreview(); };
 $("qrMode").onchange = () => { loadQrImages(); schedulePreview(); };
 $("btnQrFiles").onclick = () => $("qrFiles").click();
 $("qrFiles").onchange = async e => {

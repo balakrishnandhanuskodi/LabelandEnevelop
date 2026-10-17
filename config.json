@@ -24,6 +24,8 @@
     "page_height_mm": 297,
     "columns": 2,
     "rows": 6,
+    "copies": 1,
+    "_copies_note": "Labels per guest: 1 or 4. With 4, the copies come one after another and only the first has the QR.",
     "label_width_mm": 105,
     "label_height_mm": 49.5,
     "margin_top_mm": 0,

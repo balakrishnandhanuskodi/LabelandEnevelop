@@ -286,13 +286,29 @@ def draw_label(c, g, x, y, w, h, L, title, guides):
         draw_stack(c, right, r_cx, top, iy, start=top + cap_offset(left))
         return
 
-    # default (labels): left column centred vertically, right block starts level with it
-    left_top = draw_stack(c, left, ix + left_w / 2, iy + ih, iy, gap)
+    # default (labels): left column centred vertically, right block starts level with it.
+    # Copies without a QR keep the same top position as the label that has one.
+    start = None
+    if g.get("qr_slot") and not g["qr"]:
+        full = sum(i[2] for i in left) + qr + gap * len(left)
+        start = iy + (ih + full) / 2
+    left_top = draw_stack(c, left, ix + left_w / 2, iy + ih, iy, gap, start=start)
     draw_stack(c, right, right_x + right_w / 2, iy + ih, iy, start=left_top if left else None)
 
 
-def build_labels(guests, cfg, out, guides):
+def label_copies(guests, copies):
+    """Repeat each guest `copies` times in a row; only the first copy keeps the QR."""
+    out = []
+    for g in guests:
+        out.append(g)
+        for _ in range(max(1, copies) - 1):
+            out.append({**g, "qr": "", "qr_slot": True})
+    return out
+
+
+def build_labels(guests, cfg, out, guides, copies=1):
     L = cfg["labels"]
+    guests = label_copies(guests, copies)
     pw, ph = L["page_width_mm"] * mm, L["page_height_mm"] * mm
     lw, lh = L["label_width_mm"] * mm, L["label_height_mm"] * mm
     cols, rows = L["columns"], L["rows"]
@@ -352,6 +368,8 @@ def main():
     ap.add_argument("--qr-images", type=Path, help="folder of QR image files to use instead of downloading (matched by file name)")
     ap.add_argument("--envelopes", default="all",
                     help="envelope types to build, comma-separated (standard, leonia) or 'all' (default)")
+    ap.add_argument("--copies", type=int, choices=[1, 4], default=None,
+                    help="labels per guest (1 or 4). With 4, only the first copy has the QR. Default: labels.copies in config.json")
     ap.add_argument("--guides", action="store_true", help="draw label / envelope print-area outlines for an alignment test print")
     a = ap.parse_args()
 
@@ -382,7 +400,8 @@ def main():
     a.out.mkdir(parents=True, exist_ok=True)
     stem = a.data.stem
     lab = a.out / f"{stem}_labels.pdf"
-    pages = build_labels(guests, cfg, lab, a.guides)
+    copies = a.copies or cfg["labels"].get("copies", 1)
+    pages = build_labels(guests, cfg, lab, a.guides, copies)
     types = envelope_types(cfg)
     wanted = list(types) if a.envelopes == "all" else [t.strip() for t in a.envelopes.split(",")]
     env_files = []
@@ -392,7 +411,7 @@ def main():
         env = a.out / (f"{stem}_envelopes.pdf" if t == "standard" else f"{stem}_envelopes_{t}.pdf")
         build_envelopes(guests, cfg, env, a.guides, types[t])
         env_files.append(str(env))
-    print(f"{len(guests)} guests -> {lab} ({pages} pages)")
+    print(f"{len(guests)} guests x {copies} label{'s' if copies > 1 else ''} -> {lab} ({pages} pages)")
     for f in env_files:
         print(f"  envelopes -> {f} ({len(guests)} envelopes)")
 
