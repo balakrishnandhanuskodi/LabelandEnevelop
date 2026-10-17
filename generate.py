@@ -286,13 +286,17 @@ def draw_label(c, g, x, y, w, h, L, title, guides):
         draw_stack(c, right, r_cx, top, iy, start=top + cap_offset(left))
         return
 
-    # default (labels): left column centred vertically, right block starts level with it.
-    # Copies without a QR keep the same top position as the label that has one.
-    start = None
-    if g.get("qr_slot") and not g["qr"]:
-        full = sum(i[2] for i in left) + qr + gap * len(left)
-        start = iy + (ih + full) / 2
-    left_top = draw_stack(c, left, ix + left_w / 2, iy + ih, iy, gap, start=start)
+    # Label without a QR: centre the whole content vertically in the label,
+    # number and name starting level with each other.
+    if not g["qr"]:
+        block = max(sum(i[2] for i in left) + gap * max(len(left) - 1, 0), sum(i[2] for i in right))
+        start = iy + (ih + block) / 2
+        draw_stack(c, left, ix + left_w / 2, iy + ih, iy, gap, start=start)
+        draw_stack(c, right, right_x + right_w / 2, iy + ih, iy, start=start)
+        return
+
+    # default (labels): left column centred vertically, right block starts level with it
+    left_top = draw_stack(c, left, ix + left_w / 2, iy + ih, iy, gap)
     draw_stack(c, right, right_x + right_w / 2, iy + ih, iy, start=left_top if left else None)
 
 

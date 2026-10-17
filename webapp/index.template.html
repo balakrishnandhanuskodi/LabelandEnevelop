@@ -507,10 +507,15 @@ function drawLabel(doc, g, x, y, w, h, L, title, guides){
     drawStack(doc, right, ix + iw - rw/2, iy, iy + ih, 0, top);
     return;
   }
-  // copies without a QR keep the same top position as the label that has one
-  let start = null;
-  if (g.qrSlot && !g.qr){ const full = left.reduce((s,i)=>s+i.h, 0) + qr + gap * left.length; start = iy + (ih - full)/2; }
-  const leftTop = drawStack(doc, left, ix + leftW/2, iy, iy + ih, gap, start);
+  // label without a QR: centre the whole content vertically, number and name level
+  if (!g.qr){
+    const block = Math.max(left.reduce((s,i)=>s+i.h, 0) + gap * Math.max(left.length - 1, 0), right.reduce((s,i)=>s+i.h, 0));
+    const start = iy + (ih - block)/2;
+    drawStack(doc, left, ix + leftW/2, iy, iy + ih, gap, start);
+    drawStack(doc, right, rightX + rightW/2, iy, iy + ih, 0, start);
+    return;
+  }
+  const leftTop = drawStack(doc, left, ix + leftW/2, iy, iy + ih, gap);
   drawStack(doc, right, rightX + rightW/2, iy, iy + ih, 0, left.length ? leftTop : null);
 }
 function labelCopies(){ return parseInt($("labelCopies").value, 10) || 1; }
