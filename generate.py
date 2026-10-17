@@ -286,13 +286,19 @@ def draw_label(c, g, x, y, w, h, L, title, guides):
         draw_stack(c, right, r_cx, top, iy, start=top + cap_offset(left))
         return
 
-    # Label without a QR: centre the whole content vertically in the label,
-    # number and name starting level with each other.
+    # Label without a QR: centre the whole content horizontally and vertically,
+    # number column and text block side by side, starting level with each other.
     if not g["qr"]:
+        def tw_(it):
+            return pdfmetrics.stringWidth(it[1], it[3], it[4])
+        lw_ = max((tw_(i) for i in left), default=0)
+        rw_ = max((tw_(i) for i in right), default=0)
+        cg = L.get("column_gap_mm", 4) * mm if left and right else 0
+        x0 = ix + (iw - (lw_ + cg + rw_)) / 2
         block = max(sum(i[2] for i in left) + gap * max(len(left) - 1, 0), sum(i[2] for i in right))
         start = iy + (ih + block) / 2
-        draw_stack(c, left, ix + left_w / 2, iy + ih, iy, gap, start=start)
-        draw_stack(c, right, right_x + right_w / 2, iy + ih, iy, start=start)
+        draw_stack(c, left, x0 + lw_ / 2, iy + ih, iy, gap, start=start)
+        draw_stack(c, right, x0 + lw_ + cg + rw_ / 2, iy + ih, iy, start=start)
         return
 
     # default (labels): left column centred vertically, right block starts level with it
