@@ -123,6 +123,7 @@
         <select id="labelCopies">
           <option value="1">1 label per guest</option>
           <option value="4">4 labels per guest (QR on the first only)</option>
+          <option value="3">3 labels per guest (no QR)</option>
         </select>
         <div class="btns">
           <button id="btnLabels">Labels PDF</button>
@@ -524,10 +525,14 @@ function drawLabel(doc, g, x, y, w, h, L, title, guides){
   drawStack(doc, right, rightX + rightW/2, iy, iy + ih, 0, left.length ? leftTop : null);
 }
 function labelCopies(){ return parseInt($("labelCopies").value, 10) || 1; }
-// Repeat each guest N times in a row; only the first copy keeps the QR.
+const NO_QR_COPIES = [3];   // these label counts print with no QR on any label
+// Repeat each guest N times in a row: 1 -> with QR, 4 -> QR on the first only, 3 -> no QR at all.
 function expandCopies(list, n){
-  const out = [];
-  list.forEach(g => { out.push(g); for (let k = 1; k < n; k++) out.push(Object.assign({}, g, {qr: "", qrSlot: true})); });
+  const noQr = NO_QR_COPIES.includes(n), out = [];
+  list.forEach(g => {
+    out.push(noQr ? Object.assign({}, g, {qr: ""}) : g);
+    for (let k = 1; k < n; k++) out.push(Object.assign({}, g, {qr: ""}));
+  });
   return out;
 }
 function buildLabels(list, guides){
@@ -600,7 +605,7 @@ async function renderPreview(){
   } catch(err){ box.innerHTML = `<div class="note">Preview unavailable (${err.message}). Downloads still work.</div>`; }
 }
 function download(kind){
-  const miss = missingQr();
+  const miss = (kind === "labels" && NO_QR_COPIES.includes(labelCopies())) ? [] : missingQr();
   if (miss.length && !confirm(`${miss.length} guest(s) have no QR image yet (e.g. ${miss.slice(0,3).map(g => g.name).join(", ")}).\n\nTheir labels will show a "QR image missing" box. Build the PDF anyway?`)) return;
   const btn = {labels: $("btnLabels"), env: $("btnEnv"), leo: $("btnLeo")}[kind];
   btn.disabled = true; status("Building PDF…", "info");
@@ -612,7 +617,7 @@ function download(kind){
         doc.save(`${fileStem}_${what}.pdf`);
         const copies = kind === "labels" ? labelCopies() : 1;
         const pages = kind === "labels" ? Math.ceil(n * copies / (cfg.labels.columns * cfg.labels.rows)) : n;
-        status(`Saved ${what.replace("_", " (") + (kind === "leo" ? ")" : "")} PDF: ${n} guests${copies > 1 ? " × " + copies + " labels" : ""}, ${pages} page${pages>1?"s":""}. Print at Actual size / 100 %.`);
+        status(`Saved ${what.replace("_", " (") + (kind === "leo" ? ")" : "")} PDF: ${n} guests${copies > 1 ? " × " + copies + " labels" : ""}${NO_QR_COPIES.includes(copies) && kind === "labels" ? " (no QR)" : ""}, ${pages} page${pages>1?"s":""}. Print at Actual size / 100 %.`);
       }
     } catch(err){ status("Couldn't build the PDF: " + err.message, "err"); }
     btn.disabled = false;

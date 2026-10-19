@@ -306,13 +306,18 @@ def draw_label(c, g, x, y, w, h, L, title, guides):
     draw_stack(c, right, right_x + right_w / 2, iy + ih, iy, start=left_top if left else None)
 
 
+NO_QR_COPIES = {3}   # these label counts print with no QR on any label
+
+
 def label_copies(guests, copies):
-    """Repeat each guest `copies` times in a row; only the first copy keeps the QR."""
+    """Repeat each guest `copies` times in a row.
+    1 -> one label with the QR; 4 -> QR on the first copy only; 3 -> no QR on any copy."""
     out = []
     for g in guests:
-        out.append(g)
+        first = {**g, "qr": ""} if copies in NO_QR_COPIES else g
+        out.append(first)
         for _ in range(max(1, copies) - 1):
-            out.append({**g, "qr": "", "qr_slot": True})
+            out.append({**g, "qr": ""})
     return out
 
 
@@ -378,8 +383,9 @@ def main():
     ap.add_argument("--qr-images", type=Path, help="folder of QR image files to use instead of downloading (matched by file name)")
     ap.add_argument("--envelopes", default="all",
                     help="envelope types to build, comma-separated (standard, leonia) or 'all' (default)")
-    ap.add_argument("--copies", type=int, choices=[1, 4], default=None,
-                    help="labels per guest (1 or 4). With 4, only the first copy has the QR. Default: labels.copies in config.json")
+    ap.add_argument("--copies", type=int, choices=[1, 3, 4], default=None,
+                    help="labels per guest: 1 (with QR), 4 (QR on the first only) or 3 (no QR on any). "
+                         "Default: labels.copies in config.json")
     ap.add_argument("--guides", action="store_true", help="draw label / envelope print-area outlines for an alignment test print")
     a = ap.parse_args()
 
@@ -421,7 +427,8 @@ def main():
         env = a.out / (f"{stem}_envelopes.pdf" if t == "standard" else f"{stem}_envelopes_{t}.pdf")
         build_envelopes(guests, cfg, env, a.guides, types[t])
         env_files.append(str(env))
-    print(f"{len(guests)} guests x {copies} label{'s' if copies > 1 else ''} -> {lab} ({pages} pages)")
+    note = ", no QR" if copies in NO_QR_COPIES else (", QR on first" if copies > 1 else "")
+    print(f"{len(guests)} guests x {copies} label{'s' if copies > 1 else ''}{note} -> {lab} ({pages} pages)")
     for f in env_files:
         print(f"  envelopes -> {f} ({len(guests)} envelopes)")
 

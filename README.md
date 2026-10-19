@@ -30,6 +30,7 @@ python generate.py guests.xlsx --guides       # adds label outlines for a test p
 python generate.py guests.xlsx --qr-images ./qr_jpegs   # use QR images already on disk
 python generate.py guests.xlsx --envelopes leonia       # only the Leonia envelopes (default: all types)
 python generate.py guests.xlsx --copies 4               # 4 labels per guest, QR on the first only
+python generate.py guests.xlsx --copies 3               # 3 labels per guest, no QR on any
 ```
 
 Expected columns (auto-detected, case-insensitive): `Global Sequence`, `Block Sequence`, `Name`, `QR URL` (or `QR`, `URL`, `Link`…), `Resort`, `Building`, `Floor`, `Room #`.
@@ -47,7 +48,7 @@ Only `Name` is required. Alternative header names are listed in `config.json →
 
 Everything is in `config.json`:
 
-- `labels` — `copies` (1 or 4 labels per guest; with 4, only the first copy has the QR and the rest keep every other detail, centred horizontally and vertically in the label), page size, columns/rows, label width/height, top/left margins, gaps between labels, padding, `stack_gap_mm` (space between number, QR and code), QR size, font sizes.
+- `labels` — `copies`: labels per guest — `1` (with QR), `4` (QR on the first copy only) or `3` (no QR on any copy). Labels without a QR keep every other detail, centred horizontally and vertically. page size, columns/rows, label width/height, top/left margins, gaps between labels, padding, `stack_gap_mm` (space between number, QR and code), QR size, font sizes.
 - `envelope` — envelope width/height (e.g. C5 = 229 × 162, C6 = 162 × 114, #10 = 241 × 105); `print_area` sets the only box that is printed (`right_mm`, `top_mm` = gap from the envelope's right/top edges, `width_mm`, `height_mm`); `anchor: "top-right"` packs the content into that corner; plus QR size and font sizes.
 - `envelope_types` — extra envelope types, each listing only what differs from the standard `envelope` (e.g. `leonia` → `print_area.top_mm: 46.5`). Each type gets its own PDF and its own button/tab in the web app.
 - `qr_mode` — `auto` (image links → embed the images as is), `image` or `text`.
