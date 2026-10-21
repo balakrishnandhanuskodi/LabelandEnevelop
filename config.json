@@ -25,7 +25,7 @@
     "columns": 2,
     "rows": 6,
     "copies": 1,
-    "_copies_note": "Labels per guest: 1 (with QR), 4 (QR on the first copy only) or 3 (no QR on any copy). Copies come one after another.",
+    "_copies_note": "Labels per guest: 1 (with QR), 4 or 5 (QR on the first copy only) or 3 (no QR on any copy). Copies come one after another.",
     "label_width_mm": 105,
     "label_height_mm": 49.5,
     "margin_top_mm": 0,

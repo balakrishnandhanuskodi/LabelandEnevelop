@@ -383,8 +383,8 @@ def main():
     ap.add_argument("--qr-images", type=Path, help="folder of QR image files to use instead of downloading (matched by file name)")
     ap.add_argument("--envelopes", default="all",
                     help="envelope types to build, comma-separated (standard, leonia) or 'all' (default)")
-    ap.add_argument("--copies", type=int, choices=[1, 3, 4], default=None,
-                    help="labels per guest: 1 (with QR), 4 (QR on the first only) or 3 (no QR on any). "
+    ap.add_argument("--copies", type=int, choices=[1, 3, 4, 5], default=None,
+                    help="labels per guest: 1 (with QR), 4 or 5 (QR on the first only) or 3 (no QR on any). "
                          "Default: labels.copies in config.json")
     ap.add_argument("--guides", action="store_true", help="draw label / envelope print-area outlines for an alignment test print")
     a = ap.parse_args()
