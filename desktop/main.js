@@ -1,6 +1,5 @@
 // Entrainment 26 Print Studio — desktop shell around web/index.html.
 const { app, BrowserWindow, Menu, dialog, session, shell, ipcMain } = require("electron");
-const fs = require("fs");
 const path = require("path");
 
 if (!app.requestSingleInstanceLock()) app.quit();
@@ -86,40 +85,15 @@ function openTool(key) {
   win.webContents.once("did-finish-load", () => win.setTitle(t.title));
 }
 
-// HDB/MSD page: "Save PDF for printing" renders the print layout to an exact A4 PDF
-// (no margins, no scaling) — the file prints aligned from Acrobat at "Actual size".
+// HDB/MSD page: "Print Labels" opens the normal print dialog (pick a printer or a PDF printer),
+// pre-set to A4 with no margins so the labels stay aligned.
 function setupIpc() {
-  ipcMain.handle("save-pdf", async (e, suggestedName) => {
-    try {
-      const target = dialog.showSaveDialogSync(win, {
-        title: "Save labels PDF",
-        defaultPath: path.join(app.getPath("documents"), suggestedName || "labels.pdf"),
-        filters: [{ name: "PDF", extensions: ["pdf"] }],
-      });
-      if (!target) return { ok: false };
-      const data = await e.sender.printToPDF({
-        pageSize: "A4",
-        margins: { marginType: "none" },
-        printBackground: false,
-        preferCSSPageSize: true,
-        scale: 1,
-      });
-      fs.writeFileSync(target, data);
-      const { response } = await dialog.showMessageBox(win, {
-        type: "info",
-        message: "PDF saved",
-        detail: target + "\n\nPrint it from Adobe Acrobat Reader:\nPage Sizing → Size → Actual size,\ntick \"Choose paper source by PDF page size\", Orientation Auto.",
-        buttons: ["Open PDF", "Show in folder", "Close"],
-        defaultId: 0,
-        cancelId: 2,
-      });
-      if (response === 0) shell.openPath(target);
-      if (response === 1) shell.showItemInFolder(target);
-      return { ok: true, path: target };
-    } catch (err) {
-      return { ok: false, error: String(err && err.message || err) };
-    }
-  });
+  ipcMain.handle("print-page", (e) => new Promise((resolve) => {
+    e.sender.print(
+      { silent: false, printBackground: false, pageSize: "A4", margins: { marginType: "none" } },
+      (ok, reason) => resolve({ ok, reason })
+    );
+  }));
 }
 
 function setupMenu() {

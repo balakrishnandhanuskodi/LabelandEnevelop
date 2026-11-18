@@ -18,13 +18,27 @@
   body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
        background:var(--bg);color:var(--ink);line-height:1.5}
   .wrap{max-width:1180px;margin:0 auto;padding:20px 16px 48px}
-  header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;
-         padding:18px 22px;background:var(--brand);color:#fff;border-radius:12px;margin-bottom:18px}
-  header h1{font-size:1.35rem;font-weight:700;letter-spacing:.2px}
-  header p{opacity:.8;font-size:.92rem}
+
+  /* ---- Shared app header (same on every tool page) ---- */
+  header.app-head{display:flex;flex-direction:column;align-items:stretch;gap:10px;padding:14px 22px 16px;
+         background:linear-gradient(135deg,#1e293b 0%,#273449 60%,#334155 100%);color:#fff;border-radius:12px;
+         margin-bottom:18px;box-shadow:0 6px 18px -10px rgba(15,23,42,.55);position:relative;overflow:hidden}
+  header.app-head::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:#e31e25;opacity:.85}
+  header.app-head .ratria{display:block;margin:0 auto;height:.95rem;width:auto;fill:#e31e25}
+  header.app-head .head-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  header.app-head h1{font-size:1.35rem;font-weight:700;letter-spacing:.2px;margin:0}
+  header.app-head p{opacity:.8;font-size:.92rem;margin:0}
+  header.app-head nav{display:flex;gap:6px;flex-wrap:wrap}
+  header.app-head nav a{font-size:.8rem;font-weight:600;color:#cbd5e1;text-decoration:none;padding:5px 12px;border-radius:999px;
+         border:1px solid rgba(255,255,255,.18);transition:.15s}
+  header.app-head nav a:hover{color:#fff;border-color:rgba(255,255,255,.45)}
+  header.app-head nav a.on{background:#fff;color:#1e293b;border-color:#fff}
+  @media print{header.app-head{display:none!important}}
   .grid{display:grid;grid-template-columns:380px 1fr;gap:18px;align-items:start}
   @media (max-width:900px){.grid{grid-template-columns:1fr}}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:18px;
+        box-shadow:0 1px 2px rgba(15,23,42,.04);transition:box-shadow .15s}
+  .card:hover{box-shadow:0 4px 14px -8px rgba(15,23,42,.25)}
   .card h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:12px;font-weight:600}
   .step{display:inline-flex;width:20px;height:20px;border-radius:50%;background:var(--brand);color:#fff;
         font-size:.72rem;align-items:center;justify-content:center;margin-right:6px}
@@ -73,9 +87,13 @@
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <h1>Entrainment 26 · Labels &amp; Envelopes</h1>
-    <p>Excel / CSV in → print-ready PDFs out</p>
+  <header class="app-head">
+    <svg class="ratria" viewBox="0 0 497 111" role="img" aria-label="Ratria"><circle cx="55.5" cy="55.5" r="55.5"/><circle cx="248.5" cy="55.5" r="55.5"/><circle cx="441.5" cy="55.5" r="55.5"/></svg>
+    <div class="head-row">
+      <h1>Entrainment 26 · Labels &amp; Envelopes</h1>
+      <p>Excel / CSV in → print-ready PDFs out</p>
+    </div>
+    <nav class="toolnav" id="toolNav"><a href="index.html" class="on">Labels &amp; Envelopes</a><a href="hdb-msd.html">HDB/MSD Labels</a></nav>
   </header>
 
   <div class="grid">
