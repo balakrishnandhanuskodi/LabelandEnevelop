@@ -1065,6 +1065,17 @@
                     </svg>
                     Print Labels
                 </button>
+                <button class="btn btn-outline" id="pdfBtn" onclick="saveLabelsPdf()" disabled style="grid-column: 1 / -1;">
+                    📄 Save PDF for printing (recommended)
+                </button>
+            </div>
+            <div class="margin-note print-howto">
+                <small><strong>✅ Recommended way to print (tested, aligns perfectly):</strong><br>
+                1. Click <strong>Save PDF for printing</strong>. In a browser, choose <em>Save as PDF</em> in the print dialog, with paper <strong>A4</strong>, margins <strong>None</strong>, scale <strong>100%</strong>.<br>
+                2. Open the PDF in <strong>Adobe Acrobat Reader</strong> and click Print.<br>
+                3. Under <em>Page Sizing &amp; Handling</em>, choose <strong>Size → Actual size</strong> (not Fit or Shrink) and tick <strong>Choose paper source by PDF page size</strong>. Set Orientation to <strong>Auto</strong> and Copies to 1.<br>
+                4. Check that the preview reads <em>8.27 x 11.69 Inches</em> (A4), then print.<br>
+                ⚠️ Don't print straight from Safari. It adds its own margins, which crops the top row and puts a blank page after every sheet.</small>
             </div>
         </div>
 
@@ -1158,8 +1169,8 @@
                 </div>
 
                 <div class="margin-note">
-                    <small>💡 In the print dialog choose <strong>Scale 100%</strong> (not "Fit to page" / "Fit to printable area"), <strong>Margins: None</strong>, paper <strong>A4</strong>. Any scaling makes the text creep up or down a little more on every row.<br>
-                    🎯 To calibrate: print the Alignment Test on plain paper, hold it behind a label sheet against a window. If the outlines drift by <em>D</em> mm by the last row, change Row Gap by <em>D ÷ 9</em> (drift down → smaller gap, drift up → bigger gap). Use Top/Left to shift everything.</small>
+                    <small>💡 Print at <strong>Actual size / 100%</strong>, A4, no margins. The best way is to save a PDF and print it from Adobe Acrobat Reader at <strong>Actual size</strong>, as described in Step 5. Any scaling makes the text creep further off each row.<br>
+                    🎯 To calibrate: print the Alignment Test on plain paper and hold it behind a label sheet against a window. If the outlines are off by <em>D</em> mm at the last row, change Row Gap by <em>D ÷ 9</em> (drifting down → smaller gap, drifting up → bigger gap). Use Top/Left to move everything at once.</small>
                 </div>
             </div>
         </div>
@@ -1581,6 +1592,7 @@
 
                 document.getElementById('loading').classList.remove('show');
                 document.getElementById('printBtn').disabled = false;
+                document.getElementById('pdfBtn').disabled = false;
                 
                 // Show margin adjustment card
                 document.getElementById('adjustCard').classList.remove('hidden');
@@ -1915,6 +1927,21 @@
                     guard++;
                 }
             });
+        }
+
+        // In the Print Studio desktop app this writes an exact A4 PDF directly;
+        // in a browser it opens the print dialog (choose "Save as PDF").
+        async function saveLabelsPdf() {
+            applyMargins();
+            if (window.printStudio && window.printStudio.savePdf) {
+                const name = `HDB_MSD_${selectedSegment || 'labels'}_${new Date().toISOString().slice(0, 10)}.pdf`;
+                const res = await window.printStudio.savePdf(name);
+                if (res && res.ok) showStatus(`✅ PDF saved: ${res.path}. Print it from Adobe Acrobat Reader at <strong>Actual size</strong>.`, 'success');
+                else if (res && res.error) showStatus(`❌ Couldn't save the PDF: ${res.error}`, 'error');
+                return;
+            }
+            alert('In the print dialog choose "Save as PDF" (Chrome: Destination → Save as PDF; Mac: PDF ▾ → Save as PDF) with A4, Margins None and Scale 100%.\nThen print that PDF from Adobe Acrobat Reader at "Actual size".');
+            window.print();
         }
 
         function printLabels() {

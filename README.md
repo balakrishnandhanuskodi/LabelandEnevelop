@@ -31,9 +31,24 @@ The same tool as an installable Windows program (`desktop/`, built with Electron
 - **Save as…:** each PDF asks where to save (Documents by default), then offers *Open PDF* / *Show in folder*.
 - Sizes & positions are remembered on that computer, as in the browser.
 
+- **Tools menu:** *Entrainment Labels & Envelopes* (Ctrl+1) and **HDB/MSD Labels** (Ctrl+2): room, T-shirt and name labels on Label 30 sheets (3 × 10, 66.5 × 27.5 mm). In HDB/MSD, **Save PDF for printing** writes an exact A4 PDF.
+
 **Updating it:** change the web app as usual (`webapp/index.template.html` → `python webapp/build.py`), then raise `version` in `desktop/package.json` and push. The *Windows app* GitHub Action builds both `.exe` files and attaches them to the release `desktop-v<version>` (pushing without changing the version replaces that release's files).
 
 To run or build it yourself (Node 22): `cd desktop && npm install && npm start` (opens the app) or `npm run dist:win` on Windows (`.exe` files in `desktop/dist/`).
+
+## HDB/MSD labels (Label 30 sheets)
+
+`hdb-msd/hdb_msd_v10.html` is a standalone page (open it in Chrome) and is also in the desktop app under *Tools → HDB/MSD Labels*. `v9c` is kept for reference: its margins added up to more than A4, which made the printout drift row by row.
+
+**Printing so it lines up (tested):**
+1. Click **Save PDF for printing**. In the app the PDF is written directly. In a browser, choose *Save as PDF* with A4, margins None and scale 100%.
+2. Open the PDF in **Adobe Acrobat Reader** → Print → *Page Sizing & Handling*: **Size → Actual size**, tick **Choose paper source by PDF page size**, Orientation **Auto**.
+3. The preview should read *8.27 x 11.69 Inches* (A4).
+
+Don't print straight from Safari: it adds its own margins, which crops the top row and puts a blank page after every sheet. To fine-tune, use **Print Alignment Test** and change Row Gap by (drift at the last row ÷ 9).
+
+To update the version used by the app, add the new file under `hdb-msd/` and change `HDB_FILE` in `desktop/prepare.js`.
 
 ## Command line (Python)
 

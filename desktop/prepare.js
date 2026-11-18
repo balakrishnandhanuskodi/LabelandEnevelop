@@ -29,3 +29,13 @@ if (left) throw new Error("Unhandled CDN reference(s): " + left.join(", "));
 
 fs.writeFileSync(path.join(app, "index.html"), html);
 console.log(`app/index.html ready (${Math.round(html.length / 1024)} KB), ${libs.length} libraries bundled`);
+
+// HDB/MSD label printer (Label 30 sheets) — second tool in the app (Tools menu).
+// Update HDB_FILE when a new version of the page is added under hdb-msd/.
+const HDB_FILE = path.join(root, "..", "hdb-msd", "hdb_msd_v10.html");
+let hdb = fs.readFileSync(HDB_FILE, "utf8");
+const xlsxUrl = libs[0][0];
+if (!hdb.includes(xlsxUrl)) throw new Error(`${HDB_FILE} no longer references ${xlsxUrl} — update prepare.js`);
+hdb = hdb.split(xlsxUrl).join("vendor/xlsx.full.min.js");
+fs.writeFileSync(path.join(app, "hdb-msd.html"), hdb);
+console.log(`app/hdb-msd.html ready (${Math.round(hdb.length / 1024)} KB) from ${path.basename(HDB_FILE)}`);
