@@ -21,6 +21,20 @@ Open `web/index.html` in a browser (double-click works), or host it:
 
 To change the web app, edit `webapp/index.template.html`, then run `python webapp/build.py` (it embeds the fonts into `web/index.html`).
 
+## Windows desktop app
+
+The same tool as an installable Windows program (`desktop/`, built with Electron):
+
+- **Download:** GitHub → *Releases* → **Print Studio (Windows)** → `PrintStudio-Setup-x.y.z.exe` (installer, adds Start-menu and desktop shortcuts) or `PrintStudio-Portable-x.y.z.exe` (no install). Windows may say "Windows protected your PC" because the app isn't code-signed: *More info → Run anyway*.
+- **Works offline:** the Excel, PDF and QR libraries are bundled. Only the QR image download needs internet.
+- **QR images download directly:** no proxy or "Add QR image files…" step needed (the browser's cross-site block doesn't apply).
+- **Save as…:** each PDF asks where to save (Documents by default), then offers *Open PDF* / *Show in folder*.
+- Sizes & positions are remembered on that computer, as in the browser.
+
+**Updating it:** change the web app as usual (`webapp/index.template.html` → `python webapp/build.py`), then raise `version` in `desktop/package.json` and push. The *Windows app* GitHub Action builds both `.exe` files and attaches them to the release `desktop-v<version>` (pushing without changing the version replaces that release's files).
+
+To run or build it yourself (Node 22): `cd desktop && npm install && npm start` (opens the app) or `npm run dist:win` on Windows (`.exe` files in `desktop/dist/`).
+
 ## Command line (Python)
 
 ```bash

@@ -2,3 +2,6 @@ output/
 __pycache__/
 *.pyc
 .qr_cache/
+desktop/node_modules/
+desktop/dist/
+desktop/app/

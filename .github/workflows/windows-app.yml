@@ -1,0 +1,47 @@
+name: Windows app
+
+# Builds the desktop app (installer + portable .exe) and attaches both to a
+# GitHub Release named after desktop/package.json's version (e.g. desktop-v1.0.0).
+on:
+  push:
+    branches: [main]
+    paths: ["web/**", "desktop/**", ".github/workflows/windows-app.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+      - run: npm ci
+      - run: npm run dist:win
+      - id: ver
+        shell: bash
+        run: echo "v=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PrintStudio-windows
+          path: |
+            desktop/dist/*.exe
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: desktop-v${{ steps.ver.outputs.v }}
+          name: Print Studio ${{ steps.ver.outputs.v }} (Windows)
+          body: |
+            **PrintStudio-Setup-${{ steps.ver.outputs.v }}.exe** — installer (Start-menu and desktop shortcut).
+            **PrintStudio-Portable-${{ steps.ver.outputs.v }}.exe** — runs without installing (e.g. from a USB stick).
+
+            Built from ${{ github.sha }}. Windows may show "Windows protected your PC" because the app isn't code-signed: click *More info → Run anyway*.
+          files: desktop/dist/*.exe
+          overwrite_files: true

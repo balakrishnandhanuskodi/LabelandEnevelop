@@ -1,0 +1,58 @@
+{
+  "name": "entrainment-print-studio",
+  "productName": "Entrainment 26 Print Studio",
+  "version": "1.0.0",
+  "description": "Label & envelope PDF maker (desktop app)",
+  "author": "balakrishnandhanuskodi",
+  "license": "UNLICENSED",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "prepare-app": "node prepare.js",
+    "start": "node prepare.js && electron .",
+    "dist:win": "node prepare.js && electron-builder --win nsis portable",
+    "dist:win-zip": "node prepare.js && electron-builder --win zip"
+  },
+  "devDependencies": {
+    "electron": "38.8.6",
+    "electron-builder": "26.18.1",
+    "jspdf": "2.5.1",
+    "pdfjs-dist": "3.11.174",
+    "qrcode-generator": "1.4.4",
+    "xlsx": "0.18.5"
+  },
+  "build": {
+    "appId": "com.infinitheism.printstudio",
+    "productName": "Entrainment 26 Print Studio",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "app/**/*"
+    ],
+    "win": {
+      "icon": "build/icon.png",
+      "artifactName": "PrintStudio-${version}-win-${arch}.${ext}",
+      "signExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Print Studio",
+      "artifactName": "PrintStudio-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "PrintStudio-Portable-${version}.${ext}"
+    },
+    "publish": null
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/balakrishnandhanuskodi/LabelandEnevelop.git"
+  }
+}
