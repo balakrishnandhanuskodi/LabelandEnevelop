@@ -1,0 +1,1870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caladea:ital,wght@0,400;0,700;1,400;1,700&family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&family=Rubik:ital,wght@0,300..900;1,300..900&family=Tinos:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    <style type="text/css" media="print">
+        @page { 
+            size: A4;
+            margin: 0mm !important;
+        }
+    </style>
+    <title>HDB/MSD Label Printing</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --navy: #1e293b;
+            --navy-light: #334155;
+            --navy-dark: #0f172a;
+            --white: #ffffff;
+            --red: #dc2626;
+            --red-light: #ef4444;
+            --red-dark: #b91c1c;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-500: #64748b;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            --green-500: #22c55e;
+            --green-600: #16a34a;
+            --blue-50: #eff6ff;
+            --blue-200: #bfdbfe;
+            --blue-500: #3b82f6;
+            --blue-600: #2563eb;
+            --blue-700: #1d4ed8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'PT Sans', 'Rubik', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--gray-50);
+            min-height: 100vh;
+            color: var(--gray-900);
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .header {
+            background: var(--navy);
+            color: var(--white);
+            padding: 32px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 0;
+        }
+
+        .card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--gray-200);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--navy);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* Label Format Selection */
+        .format-selector {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .format-card {
+            border: 2px solid var(--gray-300);
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--white);
+            text-align: center;
+        }
+
+        .format-card:hover {
+            border-color: var(--blue-500);
+            background: var(--blue-50);
+        }
+
+        .format-card.selected {
+            border-color: var(--blue-500);
+            background: #eff6ff;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .format-title {
+            font-weight: 600;
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+            color: var(--navy);
+        }
+
+        .format-specs {
+            font-size: 0.9rem;
+            color: var(--gray-500);
+            margin-bottom: 8px;
+        }
+
+        .format-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: var(--blue-500);
+            color: var(--white);
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        /* Segment Selection */
+        .segment-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .segment-card {
+            border: 2px solid var(--gray-300);
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--white);
+        }
+
+        .segment-card:hover {
+            border-color: var(--navy);
+            background: var(--gray-50);
+        }
+
+        .segment-card.selected {
+            border-color: var(--green-500);
+            background: #f0fdf4;
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+        }
+
+        .segment-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            color: var(--navy);
+        }
+
+        .segment-fields {
+            font-size: 0.9rem;
+            color: var(--gray-500);
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            border: 1px solid transparent;
+            white-space: nowrap;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: var(--navy);
+            color: var(--white);
+            border-color: var(--navy);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--navy-light);
+            border-color: var(--navy-light);
+        }
+
+        .btn-danger {
+            background: var(--red);
+            color: var(--white);
+            border-color: var(--red);
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: var(--red-dark);
+            border-color: var(--red-dark);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--navy);
+            border: 1px solid var(--gray-300);
+        }
+
+        .btn-outline:hover:not(:disabled) {
+            background: var(--gray-50);
+            border-color: var(--navy);
+        }
+
+        /* Margin Adjustment Styles */
+        .margin-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .control-group {
+            background: var(--gray-50);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .control-group h4 {
+            margin-bottom: 16px;
+            color: var(--navy);
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .margin-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+        }
+
+        .margin-input-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .margin-input-group label {
+            min-width: 60px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .margin-input {
+            width: 70px;
+            padding: 6px 8px;
+            border: 1px solid var(--gray-300);
+            border-radius: 4px;
+            font-size: 14px;
+            background: var(--white);
+        }
+
+        .margin-input:focus {
+            outline: none;
+            border-color: var(--navy);
+            box-shadow: 0 0 0 2px rgba(30, 41, 59, 0.1);
+        }
+
+        .margin-slider {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--gray-300);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .margin-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--navy);
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .margin-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--navy);
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .margin-slider:hover::-webkit-slider-thumb {
+            background: var(--navy-light);
+        }
+
+        .margin-slider:hover::-moz-range-thumb {
+            background: var(--navy-light);
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .margin-note {
+            margin-top: 16px;
+            padding: 12px;
+            background: var(--blue-50);
+            border: 1px solid var(--blue-200);
+            border-radius: 6px;
+            color: var(--blue-700);
+        }
+
+        .margin-note small {
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .file-input-container {
+            position: relative;
+        }
+
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .file-input-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border: 2px dashed var(--gray-300);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            background: var(--white);
+            color: var(--gray-700);
+            font-weight: 500;
+        }
+
+        .file-input-label:hover {
+            border-color: var(--navy);
+            background: var(--gray-50);
+            color: var(--navy);
+        }
+
+        .alert {
+            padding: 16px;
+            border-radius: 8px;
+            font-weight: 500;
+            margin-bottom: 16px;
+        }
+
+        .alert-success {
+            background: #dcfce7;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: var(--red-dark);
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            border: 1px solid #bfdbfe;
+            color: #1e40af;
+        }
+
+        .field-mapping {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .form-select {
+            padding: 10px 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: 6px;
+            font-size: 14px;
+            background: var(--white);
+            color: var(--gray-900);
+            transition: all 0.2s ease-in-out;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: var(--navy);
+            box-shadow: 0 0 0 3px rgba(30, 41, 59, 0.1);
+        }
+
+        .form-input {
+            padding: 10px 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: 6px;
+            font-size: 14px;
+            background: var(--white);
+            color: var(--gray-900);
+            transition: all 0.2s ease-in-out;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--navy);
+            box-shadow: 0 0 0 3px rgba(30, 41, 59, 0.1);
+        }
+
+        .data-preview {
+            margin-top: 24px;
+        }
+
+        .data-preview.hidden {
+            display: none;
+        }
+
+        .preview-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--gray-700);
+        }
+
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .preview-table th {
+            background: var(--gray-100);
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--gray-700);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .preview-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .preview-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .preview-table tbody tr:hover {
+            background: var(--gray-50);
+        }
+
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .loading.show {
+            display: flex;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--white);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Print Styles */
+        @media print {
+            @page {
+                size: A4;
+                margin: 0 !important;
+            }
+            
+            html, body {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            
+            body {
+                background: white;
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+            
+            .container, .header, .card {
+                display: none !important;
+            }
+            
+            #labelsContainer {
+                display: block !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            
+            .page {
+                page-break-after: always;
+                page-break-inside: avoid;
+                margin: 0 !important;
+                width: 210mm !important;
+                height: 297mm !important;
+                position: relative;
+            }
+            
+            .page.label30 {
+                padding: 3.5mm 5.25mm 11mm 3.5mm !important;
+                display: grid !important;
+                grid-template-columns: repeat(3, 66.5mm) !important;
+                grid-template-rows: repeat(10, 27.5mm) !important;
+                column-gap: 2mm !important;
+                row-gap: 1.7mm !important;
+            }
+            
+            .page.label24_8x3 {
+                padding: 19mm 10mm !important;
+                display: grid !important;
+                grid-template-columns: repeat(3, 64mm) !important;
+                grid-template-rows: repeat(8, 34mm) !important;
+                column-gap: 4mm !important;
+                row-gap: 0mm !important;
+            }
+            
+            .page.label56 {
+                padding: 1.5mm 4.5mm 1.5mm 4.5mm !important;
+                display: grid !important;
+                grid-template-columns: repeat(4, 48mm) !important;
+                grid-template-rows: repeat(14, 20.5mm) !important;
+                column-gap: 3mm !important;
+                row-gap: 0.6mm !important;
+                position: relative !important;
+            }
+            
+            .page.label24 {
+                padding: 20mm 4.5mm !important;
+                display: grid !important;
+                grid-template-columns: repeat(4, 48mm) !important;
+                grid-template-rows: repeat(6, 35mm) !important;
+                column-gap: 3mm !important;
+                row-gap: 5mm !important;
+            }
+            
+            .page .label {
+                margin: 0 !important;
+                page-break-inside: avoid;
+            }
+            
+            .page.label30 .label {
+                width: 66.5mm !important;
+                height: 27.5mm !important;
+                padding: 2mm !important;
+            }
+            
+            .page.label24_8x3 .label {
+                width: 64mm !important;
+                height: 34mm !important;
+                padding: 2mm !important;
+            }
+            
+            .page.label56 .label {
+                width: 48mm !important;
+                height: 20.5mm !important;
+            }
+            
+            .page.label24 .label {
+                width: 48mm !important;
+                height: 35mm !important;
+                padding: 2mm !important;
+            }
+        }
+
+        #labelsContainer {
+            display: none;
+        }
+
+        /* Label 30 (10x3) Styles - 66.5mm x 27.5mm labels, 3 columns x 10 rows */
+        .page.label30 {
+            width: 210mm;
+            height: 297mm;
+            margin: 0 auto;
+            padding: 3.5mm 5.25mm 11mm 3.5mm;
+            background: white;
+            display: grid;
+            grid-template-columns: repeat(3, 66.5mm);
+            grid-template-rows: repeat(10, 27.5mm);
+            column-gap: 2mm;
+            row-gap: 1.7mm;
+            page-break-after: always;
+        }
+
+        .page.label30 .label {
+            width: 66.5mm;
+            height: 27.5mm;
+            border: 1px dashed #ccc;
+            padding: 2mm;
+            font-family: 'Tinos', 'Caladea', Georgia, serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10pt;
+            overflow: hidden;
+            background: white;
+        }
+
+        /* Label 24 (8x3) Styles - 64mm x 34mm labels, 3 columns x 8 rows */
+        .page.label24_8x3 {
+            width: 210mm;
+            height: 297mm;
+            margin: 0 auto;
+            padding: 13mm 10mm;
+            background: white;
+            display: grid;
+            grid-template-columns: repeat(3, 64mm);
+            grid-template-rows: repeat(8, 34mm);
+            column-gap: 4mm;
+            row-gap: 0mm;
+            page-break-after: always;
+        }
+
+        .page.label24_8x3 .label {
+            width: 64mm;
+            height: 34mm;
+            border: 1px dashed #ccc;
+            padding: 2mm;
+            font-family: 'Tinos', 'Caladea', Georgia, serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10pt;
+            overflow: hidden;
+            background: white;
+        }
+
+        /* Label 56L Styles - 48mm x 20mm labels, 4 columns x 14 rows */
+        .page.label56 {
+            width: 210mm;
+            height: 297mm;
+            margin: 0 auto;
+            padding: 1.5mm 4.5mm;
+            background: white;
+            page-break-after: always;
+            position: relative;
+            display: grid;
+            grid-template-columns: repeat(4, 48mm);
+            grid-template-rows: repeat(14, 20mm);
+            column-gap: 3mm;
+            row-gap: 1mm;
+        }
+
+        .page.label56 .label {
+            width: 48mm;
+            height: 20mm;
+            border: 1px dashed #ccc;
+            font-family: 'Caladea', 'Tinos', Cambria, Georgia, serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10pt;
+            overflow: hidden;
+            background: white;
+        }
+
+        /* Label 24 (4x6) Styles - 48mm x 35mm labels, 4 columns x 6 rows */
+        .page.label24 {
+            width: 210mm;
+            height: 297mm;
+            margin: 0 auto;
+            padding: 20mm 4mm;
+            background: white;
+            display: grid;
+            grid-template-columns: repeat(4, 48mm);
+            grid-template-rows: repeat(6, 35mm);
+            column-gap: 3.5mm;
+            row-gap: 5mm;
+            page-break-after: always;
+        }
+
+        .page.label24 .label {
+            width: 48mm;
+            height: 35mm;
+            border: 1px dashed #ccc;
+            padding: 2mm;
+            font-family: 'Tinos', 'Caladea', Georgia, serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10pt;
+            overflow: hidden;
+            background: white;
+        }
+
+        .label-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0.5mm;
+            box-sizing: border-box;
+        }
+
+        /* Uniform bold styling for all label text */
+        .label-text-primary {
+            font-weight: 700;
+            font-size: 14pt;
+            color: var(--navy-dark);
+            margin-bottom: 2mm;
+            line-height: 1.2;
+        }
+
+        .label-text-secondary {
+            font-weight: 700;
+            font-size: 13pt;
+            color: var(--navy-dark);
+            line-height: 1.3;
+        }
+
+        /* Adjustments for Label 30 (10x3) */
+        .page.label30 .label-text-primary {
+            font-size: 13pt;
+            margin-bottom: 2mm;
+        }
+
+        .page.label30 .label-text-secondary {
+            font-size: 12pt;
+        }
+
+        /* Adjustments for Label 24 (8x3) */
+        .page.label24_8x3 .label-text-primary {
+            font-size: 14pt;
+            margin-bottom: 2mm;
+        }
+
+        .page.label24_8x3 .label-text-secondary {
+            font-size: 13pt;
+        }
+
+        /* Adjustments for Label 56L - compact format */
+        .page.label56 .label-text-primary {
+            font-size: 13pt;
+            margin-bottom: 1mm;
+            line-height: 1.1;
+        }
+
+        .page.label56 .label-text-secondary {
+            font-size: 12pt;
+            line-height: 1.2;
+        }
+        
+        /* Special handling for Label 56L content */
+        .page.label56 .label-content {
+            padding: 0.5mm;
+        }
+
+        /* T-Shirt Label specific */
+        .label-tshirt-info {
+            display: flex;
+            gap: 3mm;
+            justify-content: center;
+            font-weight: 700;
+        }
+
+        
+        .size-circle {
+            display: inline-block;
+            border: 1px solid #000;
+            border-radius: 50%;
+            padding: 2px 6px;
+            min-width: 18px;
+            text-align: center;
+            font-weight: bold;
+            color: #000;
+        }
+    
+
+        /* Room Label specific with Square Box */
+        .label-room-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0mm;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+
+        .room-number-box {
+            border: 2px solid #000;
+            padding: 1mm 4mm;
+            margin-top: 0.5mm;
+            font-size: 12pt;
+            font-weight: 700;
+            min-width: 20mm;
+            min-height: 6mm;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+        }
+
+        @media screen {
+            .page {
+                margin-bottom: 20px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                background: white;
+                position: relative;
+            }
+            
+            #labelsContainer {
+                display: block;
+                padding: 20px;
+                background: #f5f5f5;
+            }
+            
+            /* Show label borders only in preview, not in print */
+            .label {
+                border: 1px solid #999 !important;
+                box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.1);
+                position: relative;
+            }
+            
+            /* Add corner marks for better alignment visualization */
+            .label::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                border: 1px dashed rgba(0, 123, 255, 0.2);
+                pointer-events: none;
+                margin: 2mm;
+            }
+        }
+
+        @media print {
+            /* Remove all borders and preview helpers from labels during printing */
+            .label {
+                border: none !important;
+                box-shadow: none !important;
+            }
+            
+            .label::before {
+                display: none !important;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Copies info badge */
+        .copies-badge {
+            display: inline-block;
+            margin-left: 8px;
+            padding: 4px 12px;
+            background: var(--blue-50);
+            border: 1px solid var(--blue-200);
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--blue-700);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 HDB/MSD Label Printing</h1>
+        </div>
+
+        <!-- Label Format Selection -->
+        <div class="card">
+            <h2 class="card-title">🏷️ Step 1: Select Label Format</h2>
+            <div class="format-selector">
+                <div class="format-card" onclick="selectFormat('label30')" data-format="label30">
+                    <div class="format-title">Label 30 (10×3)</div>
+                    <div class="format-specs">66.5mm × 27.5mm</div>
+                    <div class="format-specs">30 labels per A4 sheet</div>
+                    <div class="format-badge">3 × 10 Layout</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Segment Selection -->
+        <div class="card hidden" id="segmentCard">
+            <h2 class="card-title">📌 Step 2: Select Label Type</h2>
+            <div class="segment-selector">
+                <div class="segment-card" onclick="selectSegment('tshirt')" data-segment="tshirt">
+                    <div class="segment-title">👕 T-Shirt Label</div>
+                    <div class="segment-fields">Line 1: Name | Line 2: Gender, Size</div>
+                </div>
+                <div class="segment-card" onclick="selectSegment('room')" data-segment="room">
+                    <div class="segment-title">🏢 Room Allocation</div>
+                    <div class="segment-fields">Line 1: Name | Line 2: Floor | Line 3: Room # Number</div>
+                </div>
+                <div class="segment-card" onclick="selectSegment('name')" data-segment="name">
+                    <div class="segment-title">📛 Name Label</div>
+                    <div class="segment-fields">Field: Name Only</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- File Upload -->
+        <div class="card hidden" id="uploadCard">
+            <h2 class="card-title">📂 Step 3: Upload Excel File</h2>
+            <div class="file-input-container">
+                <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls" onchange="handleFileSelect(event)">
+                <label for="fileInput" class="file-input-label">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Choose Excel File
+                </label>
+            </div>
+            <div id="status"></div>
+        </div>
+
+        <!-- Field Mapping -->
+        <div class="card hidden" id="mappingCard">
+            <h2 class="card-title">🔗 Step 4: Map Excel Columns</h2>
+            <div class="field-mapping" id="fieldMapping">
+                <!-- Dynamic field mapping will be inserted here -->
+            </div>
+            
+            <div class="data-preview hidden" id="dataPreview">
+                <h3 class="preview-title">📊 Data Preview (First 5 rows)</h3>
+                <table class="preview-table" id="previewTable"></table>
+            </div>
+        </div>
+
+        <!-- Generate Labels -->
+        <div class="card hidden" id="generateCard">
+            <h2 class="card-title">✨ Step 5: Generate & Print</h2>
+            <div id="formatInfo" class="alert alert-info" style="margin-bottom: 16px;"></div>
+            
+            <!-- Number of Copies Control -->
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" for="copiesPerLabel">
+                    📋 Number of Copies per Label
+                </label>
+                <input type="number" id="copiesPerLabel" class="form-input" min="1" max="10" value="1" style="max-width: 150px;">
+                <div class="margin-note" style="margin-top: 8px;">
+                    <small>💡 Set how many duplicate labels to generate for each record (e.g., 2 = two labels per person in column sequence)</small>
+                </div>
+            </div>
+            
+            <div class="alert alert-info" style="margin-bottom: 16px;">
+                <small>📌 Note: Label borders visible below are for preview only and will not appear when printing.</small>
+            </div>
+            <div class="controls-grid">
+                <button class="btn btn-primary" onclick="generateLabels()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    Generate Labels
+                </button>
+                <button class="btn btn-danger" id="printBtn" onclick="printLabels()" disabled>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                        <rect x="6" y="14" width="12" height="8"></rect>
+                    </svg>
+                    Print Labels
+                </button>
+            </div>
+        </div>
+
+        <!-- Margin Adjustment -->
+        <div class="card hidden" id="adjustCard">
+            <h2 class="card-title">⚙️ Step 6: Fine-tune Margins (Optional)</h2>
+            <div class="margin-controls">
+                <div class="control-group">
+                    <h4>Page Margins (mm)</h4>
+                    <div class="margin-inputs">
+                        <div class="margin-input-group">
+                            <label for="marginTop">Top:</label>
+                            <input type="number" id="marginTop" step="0.5" min="0" max="20" class="margin-input">
+                            <input type="range" id="marginTopSlider" min="0" max="20" step="0.5" class="margin-slider">
+                        </div>
+                        <div class="margin-input-group">
+                            <label for="marginBottom">Bottom:</label>
+                            <input type="number" id="marginBottom" step="0.5" min="0" max="20" class="margin-input">
+                            <input type="range" id="marginBottomSlider" min="0" max="20" step="0.5" class="margin-slider">
+                        </div>
+                        <div class="margin-input-group">
+                            <label for="marginLeft">Left:</label>
+                            <input type="number" id="marginLeft" step="0.5" min="0" max="20" class="margin-input">
+                            <input type="range" id="marginLeftSlider" min="0" max="20" step="0.5" class="margin-slider">
+                        </div>
+                        <div class="margin-input-group">
+                            <label for="marginRight">Right:</label>
+                            <input type="number" id="marginRight" step="0.5" min="0" max="20" class="margin-input">
+                            <input type="range" id="marginRightSlider" min="0" max="20" step="0.5" class="margin-slider">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h4>Label Dimensions (mm)</h4>
+                    <div class="margin-inputs">
+                        <div class="margin-input-group">
+                            <label for="labelHeight">Height:</label>
+                            <input type="number" id="labelHeight" step="0.5" min="15" max="45" class="margin-input">
+                            <input type="range" id="labelHeightSlider" min="15" max="45" step="0.5" class="margin-slider">
+                        </div>
+                        <div class="margin-input-group">
+                            <label for="labelWidth">Width:</label>
+                            <input type="number" id="labelWidth" step="0.5" min="40" max="70" class="margin-input">
+                            <input type="range" id="labelWidthSlider" min="40" max="70" step="0.5" class="margin-slider">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h4>Label Spacing (mm)</h4>
+                    <div class="margin-inputs">
+                        <div class="margin-input-group">
+                            <label for="rowGap">Row Gap:</label>
+                            <input type="number" id="rowGap" step="0.1" min="0" max="5" class="margin-input">
+                            <input type="range" id="rowGapSlider" min="0" max="5" step="0.1" class="margin-slider">
+                        </div>
+                        <div class="margin-input-group">
+                            <label for="colGap">Column Gap:</label>
+                            <input type="number" id="colGap" step="0.1" min="0" max="10" class="margin-input">
+                            <input type="range" id="colGapSlider" min="0" max="10" step="0.1" class="margin-slider">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-group" id="fontSizeControl" style="display: none;">
+                    <h4>Text Settings (Name Label Only)</h4>
+                    <div class="margin-inputs">
+                        <div class="margin-input-group">
+                            <label for="fontSize">Font Size (pt):</label>
+                            <input type="number" id="fontSize" step="1" min="8" max="24" class="margin-input" value="14">
+                            <input type="range" id="fontSizeSlider" min="8" max="24" step="1" class="margin-slider" value="14">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-buttons">
+                    <button class="btn btn-outline" onclick="resetMargins()">
+                        Reset to Default
+                    </button>
+                    <button class="btn btn-primary" onclick="applyMargins()">
+                        Apply Changes
+                    </button>
+                    <button class="btn btn-danger" onclick="printLabels()">
+                        Print with Current Settings
+                    </button>
+                </div>
+                
+                <div class="margin-note">
+                    <small>💡 Tip: Adjust margins to align labels with your physical label sheet. Changes are applied in real-time to the preview below.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Labels Container for Printing -->
+    <div id="labelsContainer"></div>
+
+    <!-- Loading Spinner -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+        let excelData = [];
+        let headers = [];
+        let selectedFormat = null;
+        let selectedSegment = null;
+
+        const formatSpecs = {
+            label30: {
+                name: 'Label 30 (10×3)',
+                labelsPerPage: 30,
+                dimensions: '66.5mm × 27.5mm',
+                layout: '3 × 10',
+                columns: 3,
+                rows: 10
+            },
+            label24_8x3: {
+                name: 'Label 24 (8×3)',
+                labelsPerPage: 24,
+                dimensions: '64mm × 34mm',
+                layout: '3 × 8',
+                columns: 3,
+                rows: 8
+            },
+            label56: {
+                name: 'Label 56L',
+                labelsPerPage: 56,
+                dimensions: '48mm × 20mm',
+                layout: '4 × 14',
+                columns: 4,
+                rows: 14
+            },
+            label24: {
+                name: 'Label 24 (4×6)',
+                labelsPerPage: 24,
+                dimensions: '48mm × 35mm',
+                layout: '4 × 6',
+                columns: 4,
+                rows: 6
+            }
+        };
+
+        const segmentFields = {
+            tshirt: {
+                name: 'T-Shirt Label',
+                fields: ['name', 'gender', 'size'],
+                fieldLabels: {
+                    name: 'Name',
+                    gender: 'Gender',
+                    size: 'Size'
+                }
+            },
+            room: {
+                name: 'Room Allocation',
+                fields: ['name', 'room', 'floor'],
+                fieldLabels: {
+                    name: 'Name',
+                    room: 'Room Number',
+                    floor: 'Floor Number'
+                }
+            },
+            name: {
+                name: 'Name Label',
+                fields: ['name'],
+                fieldLabels: {
+                    name: 'Name'
+                }
+            }
+        };
+
+        function selectFormat(format) {
+            selectedFormat = format;
+            
+            // Update visual selection
+            document.querySelectorAll('.format-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.querySelector(`[data-format="${format}"]`).classList.add('selected');
+            
+            // Show segment selection
+            document.getElementById('segmentCard').classList.remove('hidden');
+            
+            // Reset segment selection
+            selectedSegment = null;
+            document.querySelectorAll('.segment-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Hide subsequent steps
+            document.getElementById('uploadCard').classList.add('hidden');
+            document.getElementById('mappingCard').classList.add('hidden');
+            document.getElementById('generateCard').classList.add('hidden');
+        }
+
+        function selectSegment(segment) {
+            selectedSegment = segment;
+            
+            // Update visual selection
+            document.querySelectorAll('.segment-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.querySelector(`[data-segment="${segment}"]`).classList.add('selected');
+            
+            // Show upload section
+            document.getElementById('uploadCard').classList.remove('hidden');
+            
+            // Show format info
+            updateFormatInfo();
+            
+            // Show next steps if file is already loaded
+            if (excelData.length > 0) {
+                showFieldMapping();
+            }
+        }
+
+        function updateFormatInfo() {
+            if (selectedFormat && selectedSegment) {
+                const format = formatSpecs[selectedFormat];
+                const segment = segmentFields[selectedSegment];
+                const infoDiv = document.getElementById('formatInfo');
+                infoDiv.innerHTML = `<strong>Selected:</strong> ${format.name} (${format.dimensions}, ${format.labelsPerPage} labels/sheet) | ${segment.name}`;
+            }
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (!selectedFormat || !selectedSegment) {
+                showStatus('❌ Please select label format and type first', 'error');
+                event.target.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                    
+                    if (jsonData.length === 0) {
+                        showStatus('❌ No data found in the Excel file', 'error');
+                        return;
+                    }
+                    
+                    excelData = jsonData;
+                    headers = Object.keys(jsonData[0]);
+                    
+                    showStatus(`✅ Successfully loaded ${jsonData.length} records`, 'success');
+                    showFieldMapping();
+                    showDataPreview();
+                    
+                } catch (error) {
+                    console.error('Error reading file:', error);
+                    showStatus('❌ Error reading file. Please ensure it\'s a valid Excel file.', 'error');
+                }
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+
+        function showStatus(message, type = '') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = type ? `alert alert-${type}` : '';
+            statusDiv.innerHTML = message;
+            statusDiv.style.display = message ? 'block' : 'none';
+        }
+
+        function showFieldMapping() {
+            if (!selectedSegment) return;
+
+            const mappingCard = document.getElementById('mappingCard');
+            const generateCard = document.getElementById('generateCard');
+            const fieldMappingDiv = document.getElementById('fieldMapping');
+            
+            const segment = segmentFields[selectedSegment];
+            let mappingHTML = '';
+            
+            segment.fields.forEach(field => {
+                mappingHTML += `
+                    <div class="form-group">
+                        <label class="form-label" for="${field}Field">${segment.fieldLabels[field]}</label>
+                        <select class="form-select" id="${field}Field">
+                            <option value="">-- Select Column --</option>
+                            ${headers.map(h => `<option value="${h}">${h}</option>`).join('')}
+                        </select>
+                    </div>
+                `;
+            });
+            
+            fieldMappingDiv.innerHTML = mappingHTML;
+            mappingCard.classList.remove('hidden');
+            generateCard.classList.remove('hidden');
+            
+            // Try to auto-map fields
+            autoMapFields();
+        }
+
+        function autoMapFields() {
+            if (!selectedSegment) return;
+
+            const segment = segmentFields[selectedSegment];
+            
+            segment.fields.forEach(field => {
+                const select = document.getElementById(`${field}Field`);
+                if (!select) return;
+                
+                // Try to find matching header
+                const fieldLabel = segment.fieldLabels[field].toLowerCase();
+                const matchingHeader = headers.find(h => 
+                    h.toLowerCase().includes(fieldLabel) ||
+                    h.toLowerCase().includes(field)
+                );
+                
+                if (matchingHeader) {
+                    select.value = matchingHeader;
+                }
+            });
+        }
+
+        function showDataPreview() {
+            const previewDiv = document.getElementById('dataPreview');
+            const table = document.getElementById('previewTable');
+            
+            // Create table header
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            headers.forEach(header => {
+                const th = document.createElement('th');
+                th.textContent = header;
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            
+            // Create table body with first 5 rows
+            const tbody = document.createElement('tbody');
+            excelData.slice(0, 5).forEach(row => {
+                const tr = document.createElement('tr');
+                headers.forEach(header => {
+                    const td = document.createElement('td');
+                    td.textContent = row[header] || '';
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+            
+            table.innerHTML = '';
+            table.appendChild(thead);
+            table.appendChild(tbody);
+            previewDiv.classList.remove('hidden');
+        }
+
+        function generateLabels() {
+            if (!selectedFormat || !selectedSegment) {
+                showStatus('❌ Please select label format and type', 'error');
+                return;
+            }
+
+            const segment = segmentFields[selectedSegment];
+            const format = formatSpecs[selectedFormat];
+            const fieldValues = {};
+            let missingFields = [];
+
+            // Check required fields
+            segment.fields.forEach(field => {
+                const select = document.getElementById(`${field}Field`);
+                if (select) {
+                    fieldValues[field] = select.value;
+                    if (!select.value && field === 'name') {
+                        missingFields.push(segment.fieldLabels[field]);
+                    }
+                }
+            });
+
+            if (missingFields.length > 0) {
+                showStatus(`❌ Please select required field: ${missingFields.join(', ')}`, 'error');
+                return;
+            }
+
+            // Get number of copies per label
+            const copiesPerLabel = parseInt(document.getElementById('copiesPerLabel').value) || 1;
+
+            document.getElementById('loading').classList.add('show');
+            
+            setTimeout(() => {
+                const labelsContainer = document.getElementById('labelsContainer');
+                labelsContainer.innerHTML = '';
+
+                // Create expanded data array with copies
+                let expandedData = [];
+                excelData.forEach(record => {
+                    for (let i = 0; i < copiesPerLabel; i++) {
+                        expandedData.push(record);
+                    }
+                });
+
+                const labelsPerPage = format.labelsPerPage;
+                const totalLabels = expandedData.length;
+                const totalPages = Math.ceil(totalLabels / labelsPerPage);
+
+                for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
+                    const page = document.createElement('div');
+                    page.className = `page ${selectedFormat}`;
+
+                    const startIndex = pageIndex * labelsPerPage;
+                    const endIndex = Math.min(startIndex + labelsPerPage, totalLabels);
+
+                    for (let i = startIndex; i < endIndex; i++) {
+                        const record = expandedData[i];
+                        const label = document.createElement('div');
+                        label.className = 'label';
+
+                        const labelContent = document.createElement('div');
+                        labelContent.className = 'label-content';
+
+                        // Generate label based on segment type
+                        if (selectedSegment === 'tshirt') {
+                            // Name
+                            const nameDiv = document.createElement('div');
+                            nameDiv.className = 'label-text-primary';
+                            nameDiv.textContent = record[fieldValues.name] || '';
+                            labelContent.appendChild(nameDiv);
+
+                            // Gender (separate line)
+                            if (fieldValues.gender && record[fieldValues.gender]) {
+                                const genderDiv = document.createElement('div');
+                                genderDiv.className = 'label-text-secondary';
+                                genderDiv.textContent = record[fieldValues.gender];
+                                labelContent.appendChild(genderDiv);
+                            }
+
+                            // Size (bold and new line)
+                            if (fieldValues.size && record[fieldValues.size]) {
+                                const sizeValue = record[fieldValues.size].toString().trim();
+                                if (sizeValue.toLowerCase() !== 'no') {
+                                    const sizeDiv = document.createElement('div');
+                                    sizeDiv.className = 'label-text-secondary';
+                                    sizeDiv.style.fontWeight = 'bold';
+                                    sizeDiv.innerHTML = `<span class="size-circle">${sizeValue}</span>`;
+                                    labelContent.appendChild(sizeDiv);
+                                }
+                            }
+                        } else if (selectedSegment === 'room') {
+                            // Room Label with three-line format: Name / Floor / Room # <number>
+                            const roomInfoDiv = document.createElement('div');
+                            roomInfoDiv.className = 'label-room-info';
+                            
+                            // Name - Line 1
+                            if (fieldValues.name && record[fieldValues.name]) {
+                                const nameDiv = document.createElement('div');
+                                nameDiv.className = 'label-text-primary';
+                                nameDiv.style.fontSize = '16pt';
+                                nameDiv.style.marginBottom = '0';
+                                nameDiv.textContent = record[fieldValues.name];
+                                roomInfoDiv.appendChild(nameDiv);
+                            }
+                            
+                            // Floor - Line 2
+                            if (fieldValues.floor && record[fieldValues.floor]) {
+                                const floorDiv = document.createElement('div');
+                                floorDiv.className = 'label-text-secondary';
+                                floorDiv.style.fontSize = '16pt';
+                                floorDiv.style.marginTop = '0';
+                                floorDiv.style.marginBottom = '0';
+                                floorDiv.textContent = record[fieldValues.floor];
+                                roomInfoDiv.appendChild(floorDiv);
+                            }
+                            
+                            // Room Number - Line 3 (no box)
+                            if (fieldValues.room && record[fieldValues.room]) {
+                                const roomDiv = document.createElement('div');
+                                roomDiv.className = 'label-text-secondary';
+                                roomDiv.style.fontSize = '16pt';
+                                roomDiv.style.marginTop = '0';
+                                roomDiv.textContent = `Room # ${record[fieldValues.room]}`;
+                                roomInfoDiv.appendChild(roomDiv);
+                            }
+                            
+                            labelContent.appendChild(roomInfoDiv);
+
+                        } else if (selectedSegment === 'name') {
+                            // Name only - larger text
+                            const nameDiv = document.createElement('div');
+                            nameDiv.className = 'label-text-primary';
+                            nameDiv.style.fontSize = selectedFormat === 'label24_8x3' ? '14pt' : 
+                                                     selectedFormat === 'label24' ? '12pt' : '11pt';
+                            nameDiv.textContent = record[fieldValues.name] || '';
+                            labelContent.appendChild(nameDiv);
+                        }
+
+                        label.appendChild(labelContent);
+                        page.appendChild(label);
+                    }
+
+                    // Fill empty labels if needed
+                    for (let i = endIndex; i < startIndex + labelsPerPage; i++) {
+                        const emptyLabel = document.createElement('div');
+                        emptyLabel.className = 'label';
+                        page.appendChild(emptyLabel);
+                    }
+
+                    labelsContainer.appendChild(page);
+                }
+
+                document.getElementById('loading').classList.remove('show');
+                document.getElementById('printBtn').disabled = false;
+                
+                // Show margin adjustment card
+                document.getElementById('adjustCard').classList.remove('hidden');
+                
+                // Initialize margin controls with default values
+                initializeMarginControls();
+                
+                const copiesInfo = copiesPerLabel > 1 ? `<span class="copies-badge">${copiesPerLabel} copies per label</span>` : '';
+                showStatus(`✅ Successfully generated ${totalLabels} labels (${excelData.length} unique records × ${copiesPerLabel}) on ${totalPages} page(s) using ${format.name} format ${copiesInfo}`, 'success');
+            }, 100);
+        }
+
+        // Margin adjustment settings for each format
+        const marginSettings = {
+            label30: {
+                top: 3.5,
+                bottom: 11,
+                left: 3.5,
+                right: 5.25,
+                rowGap: 1.7,
+                colGap: 2,
+                labelHeight: 27.5,
+                labelWidth: 66.5,
+                fontSize: 14
+            },
+            label24_8x3: {
+                top: 13,
+                bottom: 13,
+                left: 10,
+                right: 10,
+                rowGap: 0,
+                colGap: 4,
+                labelHeight: 34,
+                labelWidth: 64
+            },
+            label56: {
+                top: 1.5,
+                bottom: 1.5,
+                left: 4.5,
+                right: 4.5,
+                rowGap: 0.6,
+                colGap: 3,
+                labelHeight: 20.5,
+                labelWidth: 48
+            },
+            label24: {
+                top: 20,
+                bottom: 20,
+                left: 4,
+                right: 4,
+                rowGap: 5,
+                colGap: 3.5,
+                labelHeight: 35,
+                labelWidth: 48
+            }
+        };
+
+        // Initialize margin controls with current values
+        function initializeMarginControls() {
+            if (!selectedFormat) return;
+            
+            const settings = marginSettings[selectedFormat];
+            
+            // Set initial values
+            document.getElementById('marginTop').value = settings.top;
+            document.getElementById('marginTopSlider').value = settings.top;
+            document.getElementById('marginBottom').value = settings.bottom;
+            document.getElementById('marginBottomSlider').value = settings.bottom;
+            document.getElementById('marginLeft').value = settings.left;
+            document.getElementById('marginLeftSlider').value = settings.left;
+            document.getElementById('marginRight').value = settings.right;
+            document.getElementById('marginRightSlider').value = settings.right;
+            document.getElementById('rowGap').value = settings.rowGap;
+            document.getElementById('rowGapSlider').value = settings.rowGap;
+            document.getElementById('colGap').value = settings.colGap;
+            document.getElementById('colGapSlider').value = settings.colGap;
+            document.getElementById('labelHeight').value = settings.labelHeight;
+            document.getElementById('labelHeightSlider').value = settings.labelHeight;
+            document.getElementById('labelWidth').value = settings.labelWidth;
+            document.getElementById('labelWidthSlider').value = settings.labelWidth;
+            
+            // Show font size control only for Name segment
+            const fontSizeControl = document.getElementById('fontSizeControl');
+            if (selectedSegment === 'name') {
+                fontSizeControl.style.display = 'block';
+                document.getElementById('fontSize').value = settings.fontSize || 14;
+                document.getElementById('fontSizeSlider').value = settings.fontSize || 14;
+            } else {
+                fontSizeControl.style.display = 'none';
+            }
+            
+            // Add event listeners for synchronization
+            setupMarginListeners();
+        }
+
+        // Setup event listeners for margin controls
+        function setupMarginListeners() {
+            const controls = [
+                { input: 'marginTop', slider: 'marginTopSlider' },
+                { input: 'marginBottom', slider: 'marginBottomSlider' },
+                { input: 'marginLeft', slider: 'marginLeftSlider' },
+                { input: 'marginRight', slider: 'marginRightSlider' },
+                { input: 'rowGap', slider: 'rowGapSlider' },
+                { input: 'colGap', slider: 'colGapSlider' },
+                { input: 'labelHeight', slider: 'labelHeightSlider' },
+                { input: 'labelWidth', slider: 'labelWidthSlider' },
+                { input: 'fontSize', slider: 'fontSizeSlider' }
+            ];
+            
+            controls.forEach(control => {
+                const input = document.getElementById(control.input);
+                const slider = document.getElementById(control.slider);
+                
+                if (input && slider) {
+                    // Sync slider when input changes
+                    input.addEventListener('input', function() {
+                        slider.value = this.value;
+                        applyMarginsLive();
+                    });
+                    
+                    // Sync input when slider changes
+                    slider.addEventListener('input', function() {
+                        input.value = this.value;
+                        applyMarginsLive();
+                    });
+                }
+            });
+        }
+
+        // Apply margins in real-time (for preview)
+        function applyMarginsLive() {
+            if (!selectedFormat) return;
+            
+            const pages = document.querySelectorAll(`.page.${selectedFormat}`);
+            const labels = document.querySelectorAll(`.page.${selectedFormat} .label`);
+            
+            const top = parseFloat(document.getElementById('marginTop').value) || 0;
+            const bottom = parseFloat(document.getElementById('marginBottom').value) || 0;
+            const left = parseFloat(document.getElementById('marginLeft').value) || 0;
+            const right = parseFloat(document.getElementById('marginRight').value) || 0;
+            const rowGap = parseFloat(document.getElementById('rowGap').value) || 0;
+            const colGap = parseFloat(document.getElementById('colGap').value) || 0;
+            const labelHeight = parseFloat(document.getElementById('labelHeight').value) || 20;
+            const labelWidth = parseFloat(document.getElementById('labelWidth').value) || 48;
+            
+            const format = formatSpecs[selectedFormat];
+            
+            pages.forEach(page => {
+                page.style.padding = `${top}mm ${right}mm ${bottom}mm ${left}mm`;
+                page.style.rowGap = `${rowGap}mm`;
+                page.style.columnGap = `${colGap}mm`;
+                
+                // Update grid template with new dimensions
+                page.style.gridTemplateRows = `repeat(${format.rows}, ${labelHeight}mm)`;
+                page.style.gridTemplateColumns = `repeat(${format.columns}, ${labelWidth}mm)`;
+            });
+            
+            // Update individual label dimensions
+            labels.forEach(label => {
+                label.style.height = `${labelHeight}mm`;
+                label.style.width = `${labelWidth}mm`;
+            });
+            
+            // Apply font size for Name labels
+            if (selectedSegment === 'name') {
+                const fontSize = parseFloat(document.getElementById('fontSize').value) || 14;
+                document.querySelectorAll(`.page.${selectedFormat} .label-text-primary`).forEach(text => {
+                    text.style.fontSize = `${fontSize}pt`;
+                });
+            }
+        }
+
+        // Apply margins and save settings
+        function applyMargins() {
+            if (!selectedFormat) return;
+            
+            // Save current settings
+            marginSettings[selectedFormat] = {
+                top: parseFloat(document.getElementById('marginTop').value) || 0,
+                bottom: parseFloat(document.getElementById('marginBottom').value) || 0,
+                left: parseFloat(document.getElementById('marginLeft').value) || 0,
+                right: parseFloat(document.getElementById('marginRight').value) || 0,
+                rowGap: parseFloat(document.getElementById('rowGap').value) || 0,
+                colGap: parseFloat(document.getElementById('colGap').value) || 0,
+                labelHeight: parseFloat(document.getElementById('labelHeight').value) || 20,
+                labelWidth: parseFloat(document.getElementById('labelWidth').value) || 48,
+                fontSize: parseFloat(document.getElementById('fontSize').value) || 14
+            };
+            
+            applyMarginsLive();
+            
+            // Update print styles dynamically
+            updatePrintStyles();
+            
+            showStatus('✅ Margins applied successfully', 'success');
+        }
+
+        // Reset margins to default values
+        function resetMargins() {
+            if (!selectedFormat) return;
+            
+            // Default values
+            const defaults = {
+                label30: {
+                    top: 3.5,
+                    bottom: 11,
+                    left: 3.5,
+                    right: 5.25,
+                    rowGap: 1.7,
+                    colGap: 2,
+                    labelHeight: 27.5,
+                    labelWidth: 66.5,
+                    fontSize: 14
+                },
+                label24_8x3: {
+                    top: 13,
+                    bottom: 13,
+                    left: 10,
+                    right: 10,
+                    rowGap: 0,
+                    colGap: 4,
+                    labelHeight: 34,
+                    labelWidth: 64
+                },
+                label56: {
+                    top: 1.5,
+                    bottom: 1.5,
+                    left: 4.5,
+                    right: 4.5,
+                    rowGap: 0.6,
+                    colGap: 3,
+                    labelHeight: 20.5,
+                    labelWidth: 48
+                },
+                label24: {
+                    top: 20,
+                    bottom: 20,
+                    left: 4,
+                    right: 4,
+                    rowGap: 5,
+                    colGap: 3.5,
+                    labelHeight: 35,
+                    labelWidth: 48
+                }
+            };
+            
+            marginSettings[selectedFormat] = defaults[selectedFormat];
+            initializeMarginControls();
+            applyMarginsLive();
+            updatePrintStyles();
+            
+            showStatus('✅ Margins reset to default', 'success');
+        }
+
+        // Update print styles dynamically
+        function updatePrintStyles() {
+            if (!selectedFormat) return;
+            
+            const settings = marginSettings[selectedFormat];
+            const format = formatSpecs[selectedFormat];
+            
+            // Find or create a style element for dynamic print styles
+            let printStyle = document.getElementById('dynamicPrintStyles');
+            if (!printStyle) {
+                printStyle = document.createElement('style');
+                printStyle.id = 'dynamicPrintStyles';
+                printStyle.type = 'text/css';
+                document.head.appendChild(printStyle);
+            }
+            
+            // Update the print styles
+            let styleContent = `
+                @media print {
+                    .page.${selectedFormat} {
+                        padding: ${settings.top}mm ${settings.right}mm ${settings.bottom}mm ${settings.left}mm !important;
+                        row-gap: ${settings.rowGap}mm !important;
+                        column-gap: ${settings.colGap}mm !important;
+                        grid-template-rows: repeat(${format.rows}, ${settings.labelHeight}mm) !important;
+                        grid-template-columns: repeat(${format.columns}, ${settings.labelWidth}mm) !important;
+                    }
+                    
+                    .page.${selectedFormat} .label {
+                        height: ${settings.labelHeight}mm !important;
+                        width: ${settings.labelWidth}mm !important;
+                    }`;
+            
+            // Add font size for Name labels
+            if (selectedSegment === 'name' && settings.fontSize) {
+                styleContent += `
+                    
+                    .page.${selectedFormat} .label-text-primary {
+                        font-size: ${settings.fontSize}pt !important;
+                    }`;
+            }
+            
+            styleContent += `
+                }
+            `;
+            
+            printStyle.innerHTML = styleContent;
+        }
+
+        function printLabels() {
+            window.print();
+        }
+    </script>
+</body>
+</html>
