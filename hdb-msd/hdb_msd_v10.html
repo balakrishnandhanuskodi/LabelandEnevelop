@@ -13,7 +13,7 @@
             margin: 0mm !important;
         }
     </style>
-    <title>HDB/MSD Label Printing</title>
+    <title>HDB/MSD Labels · Print Studio</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -957,17 +957,80 @@
             font-weight: 600;
             color: var(--blue-700);
         }
+
+  /* ---- Shared app header (same on every tool page) ---- */
+  header.app-head{display:flex;flex-direction:column;align-items:stretch;gap:10px;padding:14px 22px 16px;
+         background:linear-gradient(135deg,#1e293b 0%,#273449 60%,#334155 100%);color:#fff;border-radius:12px;
+         margin-bottom:18px;box-shadow:0 6px 18px -10px rgba(15,23,42,.55);position:relative;overflow:hidden}
+  header.app-head::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:#e31e25;opacity:.85}
+  header.app-head .ratria{display:block;margin:0 auto;height:.95rem;width:auto;fill:#e31e25}
+  header.app-head .head-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  header.app-head h1{font-size:1.35rem;font-weight:700;letter-spacing:.2px;margin:0}
+  header.app-head p{opacity:.8;font-size:.92rem;margin:0}
+  header.app-head nav{display:flex;gap:6px;flex-wrap:wrap}
+  header.app-head nav a{font-size:.8rem;font-weight:600;color:#cbd5e1;text-decoration:none;padding:5px 12px;border-radius:999px;
+         border:1px solid rgba(255,255,255,.18);transition:.15s}
+  header.app-head nav a:hover{color:#fff;border-color:rgba(255,255,255,.45)}
+  header.app-head nav a.on{background:#fff;color:#1e293b;border-color:#fff}
+  @media print{header.app-head{display:none!important}}
+
+        /* ---- Match the Labels & Envelopes page ---- */
+        :root{--ink:#0f172a;--ink-2:#334155;--muted:#64748b;--line:#e2e8f0;--line-2:#cbd5e1;--bg:#f6f7f9;--brand:#1e293b;--brand-2:#334155;--accent:#b45309}
+        body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--ink)}
+        .container{max-width:1180px;padding:20px 16px 48px}
+        .card{border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:18px;box-shadow:0 1px 2px rgba(15,23,42,.04);transition:box-shadow .15s}
+        .card:hover{box-shadow:0 4px 14px -8px rgba(15,23,42,.25)}
+        .card-title{font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:14px;font-weight:600;gap:0}
+        .card-title .opt{font-style:normal;text-transform:none;letter-spacing:0;font-weight:500;margin-left:6px;opacity:.8}
+        .step{display:inline-flex;width:20px;height:20px;border-radius:50%;background:var(--brand);color:#fff;font-size:.72rem;
+              align-items:center;justify-content:center;margin-right:8px;letter-spacing:0}
+        .format-card,.segment-card{border:1px solid var(--line-2);border-radius:10px;padding:14px 16px;transition:.15s}
+        .format-card:hover,.segment-card:hover{border-color:var(--brand);background:#f8fafc}
+        .format-card.selected,.segment-card.selected{border-color:var(--brand);background:#f1f5f9;box-shadow:0 0 0 3px rgba(30,41,59,.12)}
+        .format-title,.segment-title{font-size:1rem;color:var(--ink)}
+        .format-badge{background:var(--brand);border-radius:999px;font-size:.75rem;padding:3px 10px}
+        .btn{font-size:.9rem;font-weight:600;padding:11px 14px;border-radius:9px}
+        .btn-primary{background:var(--brand);border-color:var(--brand)}
+        .btn-primary:hover:not(:disabled){background:var(--brand-2);border-color:var(--brand-2)}
+        .btn-outline{background:#fff;color:var(--brand);border:1px solid var(--brand)}
+        .btn-outline:hover:not(:disabled){background:#f1f5f9}
+        .file-input-label{border:2px dashed var(--line-2);border-radius:10px;padding:22px 14px;background:#fbfcfd;color:var(--ink-2)}
+        .file-input-label:hover{border-color:var(--brand);color:var(--brand);background:#f1f5f9}
+        .form-label{font-size:.8rem;font-weight:600;color:var(--ink-2)}
+        .form-select,.form-input{border-radius:8px;font-size:.9rem;padding:8px 10px}
+        .alert{border-radius:8px;font-size:.86rem;font-weight:500;padding:10px 12px}
+        .alert-success{background:#ecfdf5;border-color:#a7f3d0;color:#065f46}
+        .alert-error{background:#fef2f2;border-color:#fecaca;color:#991b1b}
+        .alert-info{background:#eff6ff;border-color:#bfdbfe;color:#1e40af}
+        .control-group{background:#f8fafc;border-radius:10px;padding:16px}
+        .control-group h4{font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:var(--accent)}
+        .margin-note{border-radius:8px;color:var(--ink-2);background:#f8fafc;border:1px solid var(--line);font-size:.84rem}
+        .print-howto{margin-top:16px;padding:14px 16px;border-left:3px solid var(--brand)}
+        .print-howto > strong{display:block;color:var(--ink);margin-bottom:6px}
+        .print-howto ol{margin:0 0 0 18px;display:grid;gap:4px}
+        .print-howto .warn{margin-top:10px;padding:8px 10px;border-radius:6px;background:#fff7ed;color:#9a3412;font-size:.8rem}
+        .margin-slider{accent-color:var(--brand);min-width:60px}
+        .margin-inputs{column-gap:28px}
+        .margin-input-group label{min-width:58px}
+        .preview-table th{background:#f8fafc;font-size:.8rem}
+        .preview-table td{font-size:.8rem}
+        @media screen{#labelsContainer{background:#e5e7eb;border-radius:10px;max-width:1180px;margin:0 auto 40px}}
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>📋 HDB/MSD Label Printing</h1>
-        </div>
+        <header class="app-head">
+    <svg class="ratria" viewBox="0 0 497 111" role="img" aria-label="Ratria"><circle cx="55.5" cy="55.5" r="55.5"/><circle cx="248.5" cy="55.5" r="55.5"/><circle cx="441.5" cy="55.5" r="55.5"/></svg>
+    <div class="head-row">
+      <h1>HDB/MSD · Room, T-shirt &amp; Name Labels</h1>
+      <p>Excel in → Label 30 sheets (3 × 10) out</p>
+    </div>
+    <nav class="toolnav" id="toolNav"><a href="index.html">Labels &amp; Envelopes</a><a href="hdb-msd.html" class="on">HDB/MSD Labels</a></nav>
+  </header>
 
         <!-- Label Format Selection -->
         <div class="card">
-            <h2 class="card-title">🏷️ Step 1: Select Label Format</h2>
+            <h2 class="card-title"><span class="step">1</span>Label format</h2>
             <div class="format-selector">
                 <div class="format-card" onclick="selectFormat('label30')" data-format="label30">
                     <div class="format-title">Label 30 (10×3)</div>
@@ -980,7 +1043,7 @@
 
         <!-- Segment Selection -->
         <div class="card hidden" id="segmentCard">
-            <h2 class="card-title">📌 Step 2: Select Label Type</h2>
+            <h2 class="card-title"><span class="step">2</span>Label type</h2>
             <div class="segment-selector">
                 <div class="segment-card" onclick="selectSegment('tshirt')" data-segment="tshirt">
                     <div class="segment-title">👕 T-Shirt Label</div>
@@ -999,7 +1062,7 @@
 
         <!-- File Upload -->
         <div class="card hidden" id="uploadCard">
-            <h2 class="card-title">📂 Step 3: Upload Excel File</h2>
+            <h2 class="card-title"><span class="step">3</span>Excel file</h2>
             <div class="file-input-container">
                 <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls" onchange="handleFileSelect(event)">
                 <label for="fileInput" class="file-input-label">
@@ -1016,7 +1079,7 @@
 
         <!-- Field Mapping -->
         <div class="card hidden" id="mappingCard">
-            <h2 class="card-title">🔗 Step 4: Map Excel Columns</h2>
+            <h2 class="card-title"><span class="step">4</span>Columns</h2>
             <div class="field-mapping" id="fieldMapping">
                 <!-- Dynamic field mapping will be inserted here -->
             </div>
@@ -1029,13 +1092,13 @@
 
         <!-- Generate Labels -->
         <div class="card hidden" id="generateCard">
-            <h2 class="card-title">✨ Step 5: Generate & Print</h2>
+            <h2 class="card-title"><span class="step">5</span>Generate &amp; print</h2>
             <div id="formatInfo" class="alert alert-info" style="margin-bottom: 16px;"></div>
             
             <!-- Number of Copies Control -->
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label" for="copiesPerLabel">
-                    📋 Number of Copies per Label
+                    Number of copies per label
                 </label>
                 <input type="number" id="copiesPerLabel" class="form-input" min="1" max="10" value="1" style="max-width: 150px;">
                 <div class="margin-note" style="margin-top: 8px;">
@@ -1044,7 +1107,7 @@
             </div>
             
             <div class="alert alert-info" style="margin-bottom: 16px;">
-                <small>📌 Note: Label borders visible below are for preview only and will not appear when printing.</small>
+                <small>Label borders visible below are for preview only and will not appear when printing.</small>
             </div>
             <div class="controls-grid">
                 <button class="btn btn-primary" onclick="generateLabels()">
@@ -1057,7 +1120,7 @@
                     </svg>
                     Generate Labels
                 </button>
-                <button class="btn btn-danger" id="printBtn" onclick="printLabels()" disabled>
+                <button class="btn btn-primary" id="printBtn" onclick="printLabels()" disabled>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="6 9 6 2 18 2 18 9"></polyline>
                         <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
@@ -1065,23 +1128,21 @@
                     </svg>
                     Print Labels
                 </button>
-                <button class="btn btn-outline" id="pdfBtn" onclick="saveLabelsPdf()" disabled style="grid-column: 1 / -1;">
-                    📄 Save PDF for printing (recommended)
-                </button>
             </div>
             <div class="margin-note print-howto">
-                <small><strong>✅ Recommended way to print (tested, aligns perfectly):</strong><br>
-                1. Click <strong>Save PDF for printing</strong>. In a browser, choose <em>Save as PDF</em> in the print dialog, with paper <strong>A4</strong>, margins <strong>None</strong>, scale <strong>100%</strong>.<br>
-                2. Open the PDF in <strong>Adobe Acrobat Reader</strong> and click Print.<br>
-                3. Under <em>Page Sizing &amp; Handling</em>, choose <strong>Size → Actual size</strong> (not Fit or Shrink) and tick <strong>Choose paper source by PDF page size</strong>. Set Orientation to <strong>Auto</strong> and Copies to 1.<br>
-                4. Check that the preview reads <em>8.27 x 11.69 Inches</em> (A4), then print.<br>
-                ⚠️ Don't print straight from Safari. It adds its own margins, which crops the top row and puts a blank page after every sheet.</small>
+                <strong>How to print so the labels line up</strong>
+                <ol>
+                    <li>Click <strong>Print Labels</strong>. In the print dialog, either pick your printer, or save a PDF first: <em>Microsoft Print to PDF</em> on Windows, <em>PDF ▾ → Save as PDF</em> on Mac, or <em>Save as PDF</em> in Chrome. Use paper <strong>A4</strong>, margins <strong>None</strong>, scale <strong>100%</strong>.</li>
+                    <li>To print a saved PDF, open it in <strong>Adobe Acrobat Reader</strong> → Print → <em>Page Sizing &amp; Handling</em>: <strong>Size → Actual size</strong> (not Fit or Shrink), tick <strong>Choose paper source by PDF page size</strong>, Orientation <strong>Auto</strong>.</li>
+                    <li>Check that the preview reads <em>8.27 x 11.69 Inches</em> (A4) and shows one page per sheet, then print.</li>
+                </ol>
+                <div class="warn">Don't print straight from Safari: it adds its own margins, which crops the top row and puts a blank page after every sheet.</div>
             </div>
         </div>
 
         <!-- Margin Adjustment -->
         <div class="card hidden" id="adjustCard">
-            <h2 class="card-title">⚙️ Step 6: Fine-tune Margins (Optional)</h2>
+            <h2 class="card-title"><span class="step">6</span>Fine-tune alignment <em class="opt">optional</em></h2>
             <div class="margin-controls">
                 <div class="control-group">
                     <h4>Page Margins (mm)</h4>
@@ -1163,7 +1224,7 @@
                     <button class="btn btn-outline" onclick="printAlignmentTest()">
                         Print Alignment Test
                     </button>
-                    <button class="btn btn-danger" onclick="printLabels()">
+                    <button class="btn btn-primary" onclick="printLabels()">
                         Print with Current Settings
                     </button>
                 </div>
@@ -1592,7 +1653,6 @@
 
                 document.getElementById('loading').classList.remove('show');
                 document.getElementById('printBtn').disabled = false;
-                document.getElementById('pdfBtn').disabled = false;
                 
                 // Show margin adjustment card
                 document.getElementById('adjustCard').classList.remove('hidden');
@@ -1929,31 +1989,28 @@
             });
         }
 
-        // In the Print Studio desktop app this writes an exact A4 PDF directly;
-        // in a browser it opens the print dialog (choose "Save as PDF").
-        async function saveLabelsPdf() {
-            applyMargins();
-            if (window.printStudio && window.printStudio.savePdf) {
-                const name = `HDB_MSD_${selectedSegment || 'labels'}_${new Date().toISOString().slice(0, 10)}.pdf`;
-                const res = await window.printStudio.savePdf(name);
-                if (res && res.ok) showStatus(`✅ PDF saved: ${res.path}. Print it from Adobe Acrobat Reader at <strong>Actual size</strong>.`, 'success');
-                else if (res && res.error) showStatus(`❌ Couldn't save the PDF: ${res.error}`, 'error');
-                return;
-            }
-            alert('In the print dialog choose "Save as PDF" (Chrome: Destination → Save as PDF; Mac: PDF ▾ → Save as PDF) with A4, Margins None and Scale 100%.\nThen print that PDF from Adobe Acrobat Reader at "Actual size".');
-            window.print();
+        // Tool tabs only work where both pages sit together (desktop app / website)
+        (function () {
+            const nav = document.getElementById('toolNav');
+            if (nav && !/hdb-msd\.html$/i.test(location.pathname)) nav.style.display = 'none';
+        })();
+
+        // In the desktop app the print dialog is pre-set to A4 / no margins; in a browser it's the normal dialog.
+        async function openPrintDialog() {
+            if (window.printStudio && window.printStudio.print) await window.printStudio.print();
+            else window.print();
         }
 
-        function printLabels() {
+        async function printLabels() {
             applyMargins();          // always print exactly what the preview shows
-            window.print();
+            await openPrintDialog();
         }
 
-        function printAlignmentTest() {
+        async function printAlignmentTest() {
             applyMargins();
             document.body.classList.add('calibrate');
-            window.print();
-            setTimeout(() => document.body.classList.remove('calibrate'), 500);
+            try { await openPrintDialog(); }
+            finally { setTimeout(() => document.body.classList.remove('calibrate'), 500); }
         }
     </script>
 </body>
