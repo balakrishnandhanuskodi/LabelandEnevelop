@@ -98,6 +98,8 @@
   .lbl .from{margin-top:1.2mm;padding-top:1mm;border-top:0.2mm solid #000;font-size:.72em;white-space:pre-line}
   .lbl .from b{font-weight:700}
   .lbl.skip{opacity:.0}
+  .lbl.test{align-items:center}
+  .lbl.test .num{font-size:20pt;font-weight:700;color:#000}
   @media screen{
     .sheet{box-shadow:0 2px 10px -4px rgba(15,23,42,.35);border-radius:2px}
     .lbl{outline:0.25mm dashed #cbd5e1}
@@ -177,7 +179,7 @@
             <li>To print a saved PDF, open it in <b>Adobe Acrobat Reader</b> → Print → <b>Size → Actual size</b>, tick <b>Choose paper source by PDF page size</b>, Orientation <b>Auto</b>.</li>
             <li>The preview should read <i>8.27 x 11.69 Inches</i> (A4), one page per sheet.</li>
           </ol>
-          <div class="warn">Don't print straight from Safari: it adds its own margins and shifts the labels. NovaJet sheets are for inkjet: set the printer's paper type to <i>Labels</i> if it has one.</div>
+          <div class="warn">Print the <b>Alignment Test</b> on plain paper, not on a label sheet. Don't print straight from Safari: it adds its own margins and shifts the labels. NovaJet sheets are for inkjet: set the printer's paper type to <i>Labels</i> if it has one.</div>
         </div>
 
         <details>
@@ -200,7 +202,7 @@
             <div><label class="f" for="padY">Top / bottom</label><input type="number" id="padY" step="0.5"></div>
           </div>
           <div class="fit" id="fitMsg"></div>
-          <p class="hint">Print the Alignment Test on plain paper and hold it behind a label sheet against a window. If the outlines are off by D mm at the last row, change Row gap by D ÷ 5. Use Top/Left to move everything at once. Saved on this computer.</p>
+          <p class="hint"><b>Alignment Test</b> prints numbered outlines only (no addresses). Print it on <b>plain paper</b>, put a label sheet on top and hold both against a window: each outline should sit on a label.<br>Or measure a blank sheet with a ruler: <b>Top</b> = paper top edge → first label, <b>Left</b> = paper left edge → first label, <b>Row gap</b> = space between labels going down, <b>Column gap</b> = space between the two columns.<br>If the outlines are off by D mm at the last row, change Row gap by D ÷ 5. Use Top/Left to move everything at once. Saved on this computer.</p>
           <div class="btns"><button class="ghost" type="button" onclick="resetLayout()">Reset to NovaJet 12L</button></div>
         </details>
       </div>
@@ -218,8 +220,10 @@
 <script>
 /* ---------- NovaJet 12L: 100 × 44 mm, 2 across × 6 down on A4 ---------- */
 const COLS = 2, ROWS = 6, PER = COLS * ROWS;
-const DEFAULT_LAYOUT = { top: 16.5, left: 5, w: 100, h: 44, gCol: 0, gRow: 0, padX: 6, padY: 3 };
-const KEY = 'printStudio.courier12L.v1';
+// Measured from a NovaJet 12L sheet: rounded labels with 2 mm gaps across and 3 mm gaps down,
+// centred on A4 (9 mm top/bottom, 4 mm left/right).
+const DEFAULT_LAYOUT = { top: 9, left: 4, w: 100, h: 44, gCol: 2, gRow: 3, padX: 5, padY: 3 };
+const KEY = 'printStudio.courier12L.v2';   // v2: corrected sheet layout (old saved tweaks no longer apply)
 const FIELDS = [
   ['name',  'Name',           /^(name|to|recipient|contact)/i],
   ['a1',    'Address line 1', /(address|addr).*1|^line\s*1/i],
@@ -344,8 +348,8 @@ function render(){
   const items = [];
   rows.forEach(r => { if (FIELDS.some(([k]) => val(r, k))) for (let c = 0; c < copies; c++) items.push(r); });
   const slots = start + items.length;
-  const blankTest = !items.length && document.body.classList.contains('calibrate');
-  const pages = items.length ? Math.ceil(slots / PER) : (blankTest ? 1 : 0);
+  const testSheet = document.body.classList.contains('calibrate');
+  const pages = testSheet ? 1 : (items.length ? Math.ceil(slots / PER) : 0);
 
   const box = $('sheets'); box.innerHTML = '';
   $('empty').style.display = items.length ? 'none' : '';
@@ -365,7 +369,8 @@ function render(){
       const d = document.createElement('div');
       d.className = 'lbl';
       d.style.cssText = `left:${L.left + col * (L.w + L.gCol)}mm;top:${L.top + row * (L.h + L.gRow)}mm;width:${L.w}mm;height:${L.h}mm;padding:${L.padY}mm ${L.padX}mm;font-size:${fs}pt`;
-      if (n < start) d.classList.add('skip');
+      if (testSheet) { d.classList.add('test'); d.innerHTML = `<div class="num">${i + 1}</div>`; }
+      else if (n < start) d.classList.add('skip');
       else if (n - start < items.length) d.innerHTML = labelHTML(items[n - start]);
       sh.appendChild(d);
     }
@@ -401,7 +406,7 @@ async function openPrintDialog(){
 async function printLabels(){ await openPrintDialog(); }
 async function printAlignmentTest(){
   document.body.classList.add('calibrate');
-  render();                                            // with no list loaded this gives one sheet of outlines
+  render();                                            // one sheet: numbered outlines only, no addresses
   try { await openPrintDialog(); }
   finally { setTimeout(() => { document.body.classList.remove('calibrate'); render(); }, 500); }
 }
