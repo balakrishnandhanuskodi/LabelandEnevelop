@@ -14,3 +14,8 @@ print("wrote web/index.html", len(html) // 1024, "KB")
 HDB_FILE = root / "hdb-msd" / "hdb_msd_v10.html"
 (root / "web" / "hdb-msd.html").write_text(HDB_FILE.read_text(encoding="utf-8"), encoding="utf-8")
 print("wrote web/hdb-msd.html from", HDB_FILE.name)
+
+# Courier labels (NovaJet 12L) and cheque filler — also served next to index.html.
+for src, dst in [("courier/courier_labels.html", "courier.html"), ("cheque/cheque_filler.html", "cheque.html")]:
+    (root / "web" / dst).write_text((root / src).read_text(encoding="utf-8"), encoding="utf-8")
+    print("wrote web/" + dst, "from", src)

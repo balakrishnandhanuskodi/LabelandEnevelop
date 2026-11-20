@@ -39,3 +39,13 @@ if (!hdb.includes(xlsxUrl)) throw new Error(`${HDB_FILE} no longer references ${
 hdb = hdb.split(xlsxUrl).join("vendor/xlsx.full.min.js");
 fs.writeFileSync(path.join(app, "hdb-msd.html"), hdb);
 console.log(`app/hdb-msd.html ready (${Math.round(hdb.length / 1024)} KB) from ${path.basename(HDB_FILE)}`);
+
+// Courier labels (NovaJet 12L, uses xlsx) and cheque filler (self-contained).
+for (const [src, dst] of [["courier/courier_labels.html", "courier.html"], ["cheque/cheque_filler.html", "cheque.html"]]) {
+  let page = fs.readFileSync(path.join(root, "..", src), "utf8");
+  page = page.split(xlsxUrl).join("vendor/xlsx.full.min.js");
+  const leftover = page.match(/https:\/\/cdnjs\.[^"']+/g);
+  if (leftover) throw new Error(`${src}: unhandled CDN reference(s): ${leftover.join(", ")}`);
+  fs.writeFileSync(path.join(app, dst), page);
+  console.log(`app/${dst} ready (${Math.round(page.length / 1024)} KB) from ${src}`);
+}
