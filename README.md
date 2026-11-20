@@ -31,7 +31,7 @@ The same tool as an installable Windows program (`desktop/`, built with Electron
 - **Save as…:** each PDF asks where to save (Documents by default), then offers *Open PDF* / *Show in folder*.
 - Sizes & positions are remembered on that computer, as in the browser.
 
-- **Tools menu:** *Entrainment Labels & Envelopes* (Ctrl+1) and **HDB/MSD Labels** (Ctrl+2): room, T-shirt and name labels on Label 30 sheets (3 × 10, 66.5 × 27.5 mm). Both pages share the same header (Ratria mark, tool tabs). In HDB/MSD, **Print Labels** opens the print dialog already set to A4 with no margins; pick your printer, or *Microsoft Print to PDF* to save a PDF.
+- **Tools menu:** *Entrainment Labels & Envelopes* (Ctrl+1) and **HDB/MSD Labels** (Ctrl+2): room, T-shirt and name labels on Label 30 sheets (3 × 10, 66.5 × 27.5 mm). **Courier Labels** (Ctrl+3): NovaJet 12L sheets (100 × 44 mm, 12 per A4). **Cheque Filler** (Ctrl+4): IDBI CTS-2010 cheques. All four pages share the same header (Ratria mark, tool tabs). In HDB/MSD, **Print Labels** opens the print dialog already set to A4 with no margins; pick your printer, or *Microsoft Print to PDF* to save a PDF.
 
 **Updating it:** change the web app as usual (`webapp/index.template.html` → `python webapp/build.py`), then raise `version` in `desktop/package.json` and push. The *Windows app* GitHub Action builds both `.exe` files and attaches them to the release `desktop-v<version>` (pushing without changing the version replaces that release's files).
 
@@ -49,6 +49,14 @@ To run or build it yourself (Node 22): `cd desktop && npm install && npm start` 
 Don't print straight from Safari: it adds its own margins, which crops the top row and puts a blank page after every sheet. To fine-tune, use **Print Alignment Test** and change Row Gap by (drift at the last row ÷ 9).
 
 `python webapp/build.py` also copies it to `web/hdb-msd.html` (website), and `desktop/prepare.js` bundles it into the app. To use a new version, add it under `hdb-msd/` and change `HDB_FILE` in both scripts.
+
+## Courier labels (NovaJet 12L)
+
+`courier/courier_labels.html` prints addresses on NovaJet Multipurpose 12L sheets (100 × 44 mm, 2 across × 6 down, A4). Import an Excel/CSV file with **Name, Address line 1, Address line 2, Address line 3, City, Pincode, Phone**; *Download sample Excel* gives a ready template. Columns are matched from their headings and can be changed. Options: "To," line, city–pincode on one line, "Ph:" prefix, text size, copies per address, **start at label #** (to use up a part-used sheet), and an optional From (sender) line. Long addresses shrink to fit. Sheet margins default to 16.5 mm top / 5 mm left with no gaps; use *Print Alignment Test* and *Fine-tune alignment* to match your sheets (saved on the computer). Print the same way as HDB/MSD (A4, no margins, Actual size).
+
+## Cheque filler (IDBI CTS-2010)
+
+`cheque/cheque_filler.html` fills date, payee, amount in words and figures on a 202.1 × 93.1 mm IDBI leaf, with feed modes, calibration and a test print. The cheque picture is for the on-screen preview only: it shows *ACCOUNT HOLDER NAME* and a *SAMPLE* mark and is never printed.
 
 ## Command line (Python)
 

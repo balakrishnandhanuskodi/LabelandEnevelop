@@ -77,6 +77,8 @@ function setupSession() {
 const TOOLS = {
   entrainment: { file: "index.html", title: "Entrainment 26 Print Studio" },
   hdb: { file: "hdb-msd.html", title: "Entrainment 26 Print Studio — HDB/MSD Labels" },
+  courier: { file: "courier.html", title: "Entrainment 26 Print Studio — Courier Labels" },
+  cheque: { file: "cheque.html", title: "Entrainment 26 Print Studio — Cheque Filler" },
 };
 
 function openTool(key) {
@@ -102,6 +104,8 @@ function setupMenu() {
     { label: "Tools", submenu: [
       { label: "Entrainment Labels && Envelopes", accelerator: "CmdOrCtrl+1", click: () => openTool("entrainment") },
       { label: "HDB/MSD Labels (Label 30 sheets)", accelerator: "CmdOrCtrl+2", click: () => openTool("hdb") },
+      { label: "Courier Labels (NovaJet 12L)", accelerator: "CmdOrCtrl+3", click: () => openTool("courier") },
+      { label: "Cheque Filler (IDBI)", accelerator: "CmdOrCtrl+4", click: () => openTool("cheque") },
     ] },
     { label: "Edit", submenu: [{ role: "undo" }, { role: "redo" }, { type: "separator" }, { role: "cut" }, { role: "copy" }, { role: "paste" }, { role: "selectAll" }] },
     { label: "View", submenu: [{ role: "zoomIn" }, { role: "zoomOut" }, { role: "resetZoom" }, { type: "separator" }, { role: "togglefullscreen" }, { role: "toggleDevTools" }] },
@@ -109,7 +113,7 @@ function setupMenu() {
       label: "About",
       click: () => dialog.showMessageBox(win, {
         message: "Entrainment 26 Print Studio",
-        detail: `Version ${app.getVersion()}\nLabels (12 per A4) and envelope PDFs from an Excel/CSV guest list.\nTools → HDB/MSD Labels: room, T-shirt and name labels on Label 30 sheets.\nYour data stays on this computer.`,
+        detail: `Version ${app.getVersion()}\nLabels (12 per A4) and envelope PDFs from an Excel/CSV guest list.\nTools: HDB/MSD labels (Label 30), courier labels (NovaJet 12L) and the IDBI cheque filler.\nYour data stays on this computer.`,
       }),
     }] },
   ]));
